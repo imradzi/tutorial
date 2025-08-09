@@ -1,0 +1,3 @@
+/home/radzi/cmake/tutorial/sort/build/CMakeFiles/tut.dir
+/home/radzi/cmake/tutorial/sort/build/CMakeFiles/edit_cache.dir
+/home/radzi/cmake/tutorial/sort/build/CMakeFiles/rebuild_cache.dir

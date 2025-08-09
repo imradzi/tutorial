@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/radzi/cmake/tutorial/boost_process/build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

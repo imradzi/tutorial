@@ -1,0 +1,3 @@
+mkdir -p buildwindow
+cd buildwindow
+cmake -DCMAKE_TOOLCHAIN_FILE=../tc-mingw.cmake ..

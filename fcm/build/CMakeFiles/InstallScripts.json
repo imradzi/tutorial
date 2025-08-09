@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/radzi/cmake/tutorial/fcm/build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

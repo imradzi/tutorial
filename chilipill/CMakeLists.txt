@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.20)
+project(test_prog VERSION 1.0 LANGUAGES CXX)
+add_library(math STATIC math/math.h math/math.cpp)
+add_library(appl STATIC appl/appl.cpp appl/appl.h)
+add_executable(main main.cpp)
+target_link_libraries(appl PRIVATE math)
+target_link_libraries(main PRIVATE appl)

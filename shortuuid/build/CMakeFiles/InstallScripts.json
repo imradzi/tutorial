@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/radzi/cmake/tutorial/uuid/build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

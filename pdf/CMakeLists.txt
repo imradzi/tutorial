@@ -1,0 +1,28 @@
+cmake_minimum_required(VERSION 3.21)
+project(tut VERSION 0.9.0)
+
+set(CMAKE_CXX_STANDARD 23)
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
+find_path(HPDF_INCLUDE_DIR hpdf.h PATHS /usr/local/include /opt/libharu/include NO_DEFAULT_PATH)
+find_library(HPDF_LIBRARY NAMES hpdf libhpdf PATHS /usr/local/lib /opt/libharu/lib NO_DEFAULT_PATH)
+
+if (NOT HPDF_INCLUDE_DIR OR NOT HPDF_LIBRARY)
+    message(FATAL_ERROR "libHaru not found. Please set HPDF_INCLUDE_DIR and HPDF_LIBRARY.")
+endif()
+
+find_package(Boost COMPONENTS system json filesystem serialization program_options REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+
+
+add_executable(${PROJECT_NAME} "main.cpp")
+target_link_libraries(${PROJECT_NAME} 
+  -static-libgcc -static-libstdc++
+  Threads::Threads
+  fmt::fmt-header-only
+  ${fmt_LIBRARIES}
+  ${Boost_LIBRARIES}
+  ${HPDF_LIBRARY}
+)

@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/radzi/cmake/tutorial/time/build/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
