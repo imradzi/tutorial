@@ -6,7 +6,7 @@
 			[
 				{
 					"build" : ".",
-					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"jsonFile" : "directory-.-f5ebdc15457944623624.json",
 					"minimumCMakeVersion" : 
 					{
 						"string" : "3.21"
@@ -19,7 +19,7 @@
 					]
 				}
 			],
-			"name" : "Debug",
+			"name" : "",
 			"projects" : 
 			[
 				{
@@ -39,7 +39,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "tut::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-tut-Debug-8b82f9ddfe6beba01925.json",
+					"jsonFile" : "target-tut-b611f4487a5b67a14bc7.json",
 					"name" : "tut",
 					"projectIndex" : 0
 				}

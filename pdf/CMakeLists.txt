@@ -17,7 +17,14 @@ find_package(Boost COMPONENTS system json filesystem serialization program_optio
 find_package(fmt CONFIG REQUIRED)
 
 
-add_executable(${PROJECT_NAME} "main.cpp")
+add_executable(${PROJECT_NAME} 
+"PDFWriter.cpp"
+"PDFPage.cpp"
+"PDFFont.cpp"
+"PDFError.cpp"
+"main.cpp"
+)
+
 target_link_libraries(${PROJECT_NAME} 
   -static-libgcc -static-libstdc++
   Threads::Threads
