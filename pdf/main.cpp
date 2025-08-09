@@ -57,7 +57,7 @@ public:
     auto getXHeight() { return HPDF_Font_GetXHeight(font); }
     auto getCapHeight() { return HPDF_Font_GetCapHeight(font); }
     auto textWidth(const std::string& text) { return HPDF_Font_TextWidth(font, reinterpret_cast<const HPDF_BYTE*>(text.c_str()), text.size()); }
-    std::tuple<HPDF_REAL, HPDF_REAL> measureText(const std::string& text, HPDF_REAL width, HPDF_REAL font_size, HPDF_BOOL wordwrap=false, HPDF_REAL char_space=1, HPDF_REAL word_space=1) {
+    std::tuple<HPDF_REAL, HPDF_REAL> measureText(const std::string& text, HPDF_REAL width, HPDF_REAL font_size, HPDF_BOOL wordwrap=false, HPDF_REAL char_space=0, HPDF_REAL word_space=0) {
         HPDF_REAL real_width;
         auto w = HPDF_Font_MeasureText(font, reinterpret_cast<const HPDF_BYTE*>(text.c_str()), text.size(), width, font_size, char_space, word_space, wordwrap, &real_width);
         return {w, real_width};
@@ -297,6 +297,56 @@ public:
         
     }
 
+    std::tuple<HPDF_REAL, HPDF_REAL> addConstrainedCell(PDFCell cell, HPDF_REAL x, HPDF_REAL y, HPDF_REAL boxWidth=0, HPDF_REAL boxHeight=0) {
+
+        auto fontPtr = cell.font == nullptr ? HPDF_Page_GetCurrentFont(page) : cell.font;
+        auto fontSize = cell.fontSize <= 0 ? HPDF_Page_GetCurrentFontSize(page) : cell.fontSize;
+        HPDF_Page_SetFontAndSize(page, fontPtr, fontSize);
+        auto textHeight = getTextHeight(fontPtr, fontSize);
+        auto textWidth = getTextWidth(cell.text, fontPtr, fontSize);
+
+        auto width = boxWidth > 0 ? boxWidth: cell.width;
+        if (width <= 0) {
+            width = textWidth;
+        }
+
+        width += 2*cell.padding + 2*cell.margin;
+        
+        auto height = boxHeight > 0 ? boxHeight: cell.height;
+        if (height <= 0) {
+            height = textHeight;
+        }
+        height += 2*cell.padding + 2*cell.margin;
+
+        if (cell.border_thickness > 0) {
+            HPDF_Page_SetLineWidth(page, cell.border_thickness);
+            HPDF_Page_SetRGBStroke(page, cell.border_color.r, cell.border_color.g, cell.border_color.b);
+            HPDF_Page_Rectangle(page, x+cell.margin, y-height+cell.margin, width-cell.margin, height-cell.margin-cell.margin);
+            HPDF_Page_Stroke(page);
+        }
+
+        HPDF_Page_SetRGBFill(page, cell.background_color.r, cell.background_color.g, cell.background_color.b);
+        HPDF_Page_Rectangle(page, x+cell.margin, y-height+cell.margin, width-cell.margin, height-cell.margin-cell.margin);
+        HPDF_Page_Fill(page);
+        
+        HPDF_Page_BeginText(page);
+        HPDF_Page_SetRGBFill(page, cell.text_color.r, cell.text_color.g, cell.text_color.b);
+        HPDF_Page_SetTextMatrix(page, 1, 0, 0, -1, 0, h);
+        
+        HPDF_REAL top = y-height+cell.margin+cell.padding;
+        HPDF_REAL left = x+cell.margin+cell.padding;
+        HPDF_REAL bottom = top + height-cell.margin-cell.padding;
+        HPDF_REAL right = left + width-cell.margin-cell.padding;
+        HPDF_TextAlignment align = HPDF_TALIGN_LEFT;
+        HPDF_UINT len;
+        HPDF_Page_TextRect(page, left, top, right, bottom, cell.text.c_str(), align, &len);
+        HPDF_Page_EndText(page);
+
+        return {width + cell.border_thickness, height + cell.border_thickness};
+        
+    }
+
+
     HPDF_REAL addText(const std::string& text, const std::string& font, int size, int x, int y, bool isBordered = false, int height = 0) {
         if (!isFontExist(font)) {
             throw std::runtime_error(fmt::format("Error getting font: {}", font));
@@ -390,8 +440,8 @@ int main() {
         };
 
         std::vector<PDFCell> hcells = {
-            {.border_thickness=0.5, .width=0, .height=3, .text="Horz Line 000 font=5", .font=font, .fontSize=5, .background_color=PDF_LIGHT_BLUE, .text_color=PDF_BLACK, .horizontal_justify=PDFJustification::center},
-            {.border_thickness=0.8, .width=30, .height=200, .text="Horz Line 001", .font=font, .fontSize=10, .background_color=PDF_LIGHT_GREEN, .text_color=PDF_BLACK, .vertical_justify=PDFJustification::center},
+            {.border_thickness=0.5, .width=0, .height=0, .text="Horz Line 000 font=5", .font=font, .fontSize=5, .background_color=PDF_LIGHT_BLUE, .text_color=PDF_BLACK, .horizontal_justify=PDFJustification::center},
+            {.border_thickness=1.0, .width=0, .height=0, .text="Horz Line 001", .font=font, .fontSize=10, .background_color=PDF_LIGHT_GREEN, .text_color=PDF_BLACK, .vertical_justify=PDFJustification::center},
             {.border_thickness=0.5, .text="Horz Line 002, fontsize=5", .font=font, .fontSize=5, .background_color=PDF_LIGHT_RED, .text_color=PDF_BLACK},
             {.border_thickness=0.5, .padding=10, .text="Horiz Line 003, fontsize=10", .font=font, .fontSize=10, .background_color=PDF_LIGHT_YELLOW, .text_color=PDF_BLACK},
             {.border_thickness=0.5, .padding=20, .text="Horiz Line 004", .font=font, .fontSize=10, .background_color=PDF_LIGHT_MAGENTA, .text_color=PDF_BLACK}
@@ -412,6 +462,16 @@ int main() {
             x += w-c.border_thickness;
 
         }
+
+        x=10;
+        y += 50;
+        for (const auto &c: hcells) {
+            auto thisCellWidth = page.getCellWidth(c);
+            auto [w, h] = page.addConstrainedCell(c, x, y, thisCellWidth, 0);
+            x += w-c.border_thickness;
+
+        }
+
 
     } catch (const std::exception& e) {
         std::cout << "Exception: " << e.what() << std::endl;
