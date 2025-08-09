@@ -47,6 +47,7 @@ public:
             throw std::runtime_error(fmt::format("Error getting font: {}", name));
         }
     }
+    PDFFont(HPDF_Doc pdf, HPDF_Font font) : pdf(pdf), font(font) {}
     auto getFontName() { return HPDF_Font_GetFontName(font); }
     auto getEncodingName() { return HPDF_Font_GetEncodingName(font); }
     auto getUnicodeWidth(wchar_t w) { return HPDF_Font_GetUnicodeWidth(font, w); }
@@ -56,7 +57,7 @@ public:
     auto getXHeight() { return HPDF_Font_GetXHeight(font); }
     auto getCapHeight() { return HPDF_Font_GetCapHeight(font); }
     auto textWidth(const std::string& text) { return HPDF_Font_TextWidth(font, reinterpret_cast<const HPDF_BYTE*>(text.c_str()), text.size()); }
-    std::tuple<HPDF_REAL, HPDF_REAL> measureText(const std::string& text, HPDF_REAL width, HPDF_REAL font_size, HPDF_REAL char_space, HPDF_REAL word_space, HPDF_BOOL wordwrap) {
+    std::tuple<HPDF_REAL, HPDF_REAL> measureText(const std::string& text, HPDF_REAL width, HPDF_REAL font_size, HPDF_BOOL wordwrap=false, HPDF_REAL char_space=1, HPDF_REAL word_space=1) {
         HPDF_REAL real_width;
         auto w = HPDF_Font_MeasureText(font, reinterpret_cast<const HPDF_BYTE*>(text.c_str()), text.size(), width, font_size, char_space, word_space, wordwrap, &real_width);
         return {w, real_width};
@@ -245,6 +246,7 @@ public:
             } else if (cell.horizontal_justify == PDFJustification::right) {
                 deltaWidth = balanceWidth;
             }
+            if (deltaWidth < 0) deltaWidth = 0;
         }
 
         width += 2*cell.padding + 2*cell.margin;
@@ -258,9 +260,10 @@ public:
             balanceHeight = height - textHeight;
             if (cell.vertical_justify == PDFJustification::center) {
                 deltaHeight = balanceHeight / 2;
-            } else if (cell.vertical_justify == PDFJustification::bottom) {
+            } else if (cell.vertical_justify == PDFJustification::top) {
                 deltaHeight = balanceHeight;
             }
+            if (deltaHeight < 0) deltaHeight = 0;
         }
         height += 2*cell.padding + 2*cell.margin;
 
@@ -279,10 +282,15 @@ public:
         HPDF_Page_SetRGBFill(page, cell.text_color.r, cell.text_color.g, cell.text_color.b);
         HPDF_Page_SetTextMatrix(page, 1, 0, 0, -1, 0, h);
         
-        // --- textrect not working. 
-        // HPDF_Page_TextRect(page, left, top, right, bottom, cell.text.c_str(), align, &len);
-
-        HPDF_Page_TextOut(page, x+cell.padding+cell.margin+deltaWidth, y-cell.padding-cell.margin+deltaHeight, cell.text.c_str());
+       
+        PDFFont f(pdf, fontPtr);
+        auto [measuredWidth, actualWidth] = f.measureText(cell.text, width, fontSize);
+        auto text = cell.text;
+        if (measuredWidth < actualWidth) {
+            text = cell.text.substr(0, measuredWidth-3);
+            text += "...";
+        }
+        HPDF_Page_TextOut(page, x+cell.padding+cell.margin+deltaWidth, y-cell.padding-cell.margin-deltaHeight, text.c_str());
         HPDF_Page_EndText(page);
 
         return {width + cell.border_thickness, height + cell.border_thickness};
@@ -382,8 +390,8 @@ int main() {
         };
 
         std::vector<PDFCell> hcells = {
-            {.border_thickness=0.5, .width=120, .height=3, .text="Horz Line 000 font=5", .font=font, .fontSize=5, .background_color=PDF_LIGHT_BLUE, .text_color=PDF_BLACK, .horizontal_justify=PDFJustification::center},
-            {.border_thickness=0.8, .height=200, .text="Horz Line 001", .font=font, .fontSize=10, .background_color=PDF_LIGHT_GREEN, .text_color=PDF_BLACK, .vertical_justify=PDFJustification::bottom},
+            {.border_thickness=0.5, .width=0, .height=3, .text="Horz Line 000 font=5", .font=font, .fontSize=5, .background_color=PDF_LIGHT_BLUE, .text_color=PDF_BLACK, .horizontal_justify=PDFJustification::center},
+            {.border_thickness=0.8, .width=30, .height=200, .text="Horz Line 001", .font=font, .fontSize=10, .background_color=PDF_LIGHT_GREEN, .text_color=PDF_BLACK, .vertical_justify=PDFJustification::center},
             {.border_thickness=0.5, .text="Horz Line 002, fontsize=5", .font=font, .fontSize=5, .background_color=PDF_LIGHT_RED, .text_color=PDF_BLACK},
             {.border_thickness=0.5, .padding=10, .text="Horiz Line 003, fontsize=10", .font=font, .fontSize=10, .background_color=PDF_LIGHT_YELLOW, .text_color=PDF_BLACK},
             {.border_thickness=0.5, .padding=20, .text="Horiz Line 004", .font=font, .fontSize=10, .background_color=PDF_LIGHT_MAGENTA, .text_color=PDF_BLACK}
