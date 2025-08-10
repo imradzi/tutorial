@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 3.21)
+cmake_policy(SET CMP0167 NEW)
 project(tut VERSION 0.9.0)
 
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -13,7 +16,7 @@ if (NOT HPDF_INCLUDE_DIR OR NOT HPDF_LIBRARY)
     message(FATAL_ERROR "libHaru not found. Please set HPDF_INCLUDE_DIR and HPDF_LIBRARY.")
 endif()
 
-find_package(Boost COMPONENTS system json filesystem serialization program_options REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system json filesystem serialization program_options)
 find_package(fmt CONFIG REQUIRED)
 
 # Find libpng
@@ -25,6 +28,7 @@ add_executable(${PROJECT_NAME}
 "PDFPage.cpp"
 "PDFFont.cpp"
 "PDFError.cpp"
+"PDFCell.cpp"
 "qrcodegen.cpp"
 "qrgen.cpp"
 "main.cpp"

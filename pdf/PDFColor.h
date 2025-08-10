@@ -1,10 +1,14 @@
 #pragma once
 
+#include <fmt/format.h>
+
 namespace PDF {
     struct Color {
         HPDF_REAL r;
         HPDF_REAL g;
         HPDF_REAL b;
+
+        std::string getString() const { return fmt::format("[r:{} g:{} b:{}]", r, g, b); }
     };
 
     auto constexpr BLACK = Color{.r = 0, .g = 0, .b =  0};

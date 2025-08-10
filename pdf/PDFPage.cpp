@@ -7,14 +7,21 @@
 #include <stdexcept>
 #include <iostream>
 namespace PDF {
-    Page::Page(HPDF_Doc pdf) : pdf(pdf), page(HPDF_AddPage(pdf)) {
+    Page::Page(HPDF_Doc pdf, HPDF_PageSizes size, HPDF_PageDirection orientation, CoordinateSystem coordinateSystem) : pdf(pdf), page(HPDF_AddPage(pdf)) {
         g_error.current_function = "PDFPage::PDFPage";
         if (!page) {
             throw std::runtime_error("Error adding page");
         }
+        if (HPDF_Page_SetSize(page, size, orientation) != HPDF_OK) {
+            throw std::runtime_error("Error setting page size");
+        }
         h = HPDF_Page_GetHeight(page);
         w = HPDF_Page_GetWidth(page);
-        HPDF_Page_Concat(page, 1, 0, 0, -1, 0, h); // 1) Make (0,0) be top-left for all drawing
+        if (coordinateSystem == CoordinateSystem::TOP_LEFT) {
+            setTopLeftAsOrigin();
+        } else {
+            setBottomLeftAsOrigin();
+        }
     }
 
     HPDF_REAL Page::getTextWidth(const std::string& text, const std::string& font, HPDF_REAL size) const {
@@ -85,7 +92,7 @@ namespace PDF {
         auto fontPtr = cell.properties.font == nullptr ? HPDF_Page_GetCurrentFont(page) : cell.properties.font;
         auto fontSize = cell.properties.fontSize <= 0 ? HPDF_Page_GetCurrentFontSize(page) : cell.properties.fontSize;
         HPDF_Page_SetFontAndSize(page, fontPtr, fontSize);
-        return addText(cell.rect, cell.text, cell.rect.backgroundColor, TextProperties{.font=fontPtr, .fontSize=fontSize, .color=cell.properties.color});
+        return addText(cell.rect, cell.text, TextProperties {.font = fontPtr, .fontSize = fontSize, .color = cell.properties.color}, cell.rect.backgroundColor );
     }
 
     std::tuple<HPDF_REAL, HPDF_REAL> Page::addConstrainedCell(PDF::Cell cell, HPDF_REAL x, HPDF_REAL y, HPDF_REAL boxWidth, HPDF_REAL boxHeight) {
@@ -154,7 +161,7 @@ namespace PDF {
         
     }
 
-    std::tuple<HPDF_REAL, HPDF_REAL> Page::addText(ClientRect outerRect, const std::string& text, Color backgroundColor, TextProperties prop) {
+    std::tuple<HPDF_REAL, HPDF_REAL> Page::addText(ClientRect outerRect, const std::string& text, TextProperties prop, Color backgroundColor) {
         auto textHeight = getTextHeight(prop.font, prop.fontSize);
         auto textWidth = getTextWidth(text, prop.font, prop.fontSize);
 
@@ -221,14 +228,14 @@ namespace PDF {
         return {outerRect.getOuterRect().getWidth(), outerRect.getOuterRect().getHeight()};
     }
 
-    std::tuple<HPDF_REAL, HPDF_REAL> Page::addText(ClientRect outerRect, const std::string& text, const std::string& font, HPDF_REAL fontSize, Color backgroundColor, Color textColor) {
+    std::tuple<HPDF_REAL, HPDF_REAL> Page::addText(ClientRect outerRect, const std::string& text, const std::string& font, HPDF_REAL fontSize, Color textColor, Color backgroundColor) {
         if (!isFontExist(font)) {
             throw std::runtime_error(fmt::format("Error getting font: {}", font));
         }
 
         auto fontPtr = HPDF_GetFont(pdf, font.c_str(), nullptr);
         HPDF_Page_SetFontAndSize(page, fontPtr, fontSize);
-        return addText(outerRect, text, backgroundColor, TextProperties{.font=fontPtr, .fontSize=fontSize, .color=textColor});
+        return addText(outerRect, text, TextProperties {.font = fontPtr, .fontSize = fontSize, .color = textColor}, backgroundColor);
     }
 
     // std::tuple<HPDF_REAL, HPDF_REAL> Page::addText(ClientRect outerRect, const std::string& text, Color backgroundColor, Color textColor) {
@@ -238,12 +245,14 @@ namespace PDF {
     // }
 
     void Page::drawRectangle(ClientRect rect) {
+        std::cout << "\n\nDrawing rectangle: " << rect.getString() << std::endl;
         HPDF_Page_SetRGBFill(page, rect.backgroundColor.r, rect.backgroundColor.g, rect.backgroundColor.b);
         HPDF_Page_Rectangle(page, rect.getOuterRect().topLeft.x, rect.getOuterRect().topLeft.y, rect.getOuterRect().getWidth(), rect.getOuterRect().getHeight());
         HPDF_Page_Fill(page);
 
         if (rect.borders[Position::top].size > 0) {
             auto innerRect = rect.getBorderRect();
+            std::cout << "\n\nDrawing border: " << innerRect.getString() << std::endl;
             HPDF_Page_SetLineWidth(page, rect.borders[Position::top].size);
             HPDF_Page_SetRGBStroke(page, rect.borders[Position::top].color.r, rect.borders[Position::top].color.g, rect.borders[Position::top].color.b);
             HPDF_Page_Rectangle(page, innerRect.topLeft.x, innerRect.topLeft.y, innerRect.getWidth(), innerRect.getHeight());    
