@@ -58,6 +58,8 @@ namespace PDF {
         void setSize(Size size) { setWidth(size.width); setHeight(size.height); }
         Size getSize() const { return Size {getWidth(), getHeight()}; }
         std::string getString() const { return fmt::format("topLeft:{} bottomRight:{}", topLeft.getString(), bottomRight.getString()); }
+        Rect& moveTo(Coord coord);
+        Rect& moveBy(Coord coord);
     };
 
     inline std::string getString(const std::vector<Border> &borders) {

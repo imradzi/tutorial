@@ -33,4 +33,18 @@ namespace PDF {
         if (n > checkRect.topLeft.y) innerRect.bottomRight.y = n;
         return innerRect;
     }
+
+    Rect& Rect::moveTo(Coord coord) {
+        Size size = getSize();
+        topLeft = coord;
+        bottomRight = Coord {topLeft.x + size.width, topLeft.y + size.height};
+        return *this;
+    }
+    Rect& Rect::moveBy(Coord coord) {
+        topLeft.x += coord.x;
+        topLeft.y += coord.y;
+        bottomRight.x += coord.x;
+        bottomRight.y += coord.y;
+        return *this;
+    }
 }

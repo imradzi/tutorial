@@ -92,7 +92,9 @@ namespace PDF {
         auto fontPtr = cell.properties.font == nullptr ? HPDF_Page_GetCurrentFont(page) : cell.properties.font;
         auto fontSize = cell.properties.fontSize <= 0 ? HPDF_Page_GetCurrentFontSize(page) : cell.properties.fontSize;
         HPDF_Page_SetFontAndSize(page, fontPtr, fontSize);
-        return addText(cell.rect, cell.text, TextProperties {.font = fontPtr, .fontSize = fontSize, .color = cell.properties.color}, cell.rect.backgroundColor );
+        auto cellRect = cell.rect;
+        cellRect.rect.moveTo(Coord{x, y});
+        return addText(cellRect, cell.text, TextProperties {.font = fontPtr, .fontSize = fontSize, .color = cell.properties.color}, cell.rect.backgroundColor );
     }
 
     std::tuple<HPDF_REAL, HPDF_REAL> Page::addConstrainedCell(PDF::Cell cell, HPDF_REAL x, HPDF_REAL y, HPDF_REAL boxWidth, HPDF_REAL boxHeight) {
@@ -125,7 +127,8 @@ namespace PDF {
         }
         height += cell.rect.getBoundingSize(Position::top) + cell.rect.getBoundingSize(Position::bottom);
 
-        cell.rect.rect.setSize(Size{width, height});
+        cell.rect.rect.setSize(Size {width, height});
+        cell.rect.rect.moveTo(Coord{x, y});
 
         auto rect = cell.rect.getOuterRect();
 
@@ -216,6 +219,8 @@ namespace PDF {
         PDF::Font f(pdf, prop.font);
 
         auto innerRect = outerRect.getInnerRect();
+        std::cout << "\n\nOuterRect : " << outerRect.getString() << std::endl;
+        std::cout << "\n\nAdding text: " << text << " to " << innerRect.getString() << std::endl;
 
         auto [slen, wwidth] = f.measureText(text, innerRect.getWidth(), prop.fontSize);
         auto str = text;
