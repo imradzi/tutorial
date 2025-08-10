@@ -16,12 +16,17 @@ endif()
 find_package(Boost COMPONENTS system json filesystem serialization program_options REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 
+# Find libpng
+find_package(PNG REQUIRED)
+
 
 add_executable(${PROJECT_NAME} 
 "PDFWriter.cpp"
 "PDFPage.cpp"
 "PDFFont.cpp"
 "PDFError.cpp"
+"qrcodegen.cpp"
+"qrgen.cpp"
 "main.cpp"
 )
 
@@ -32,4 +37,5 @@ target_link_libraries(${PROJECT_NAME}
   ${fmt_LIBRARIES}
   ${Boost_LIBRARIES}
   ${HPDF_LIBRARY}
+  PNG::PNG
 )

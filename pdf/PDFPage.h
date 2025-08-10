@@ -14,9 +14,6 @@ namespace PDF {
         HPDF_Page page;
         HPDF_REAL h;
         HPDF_REAL w;
-        HPDF_REAL border_width = 1.0;
-        HPDF_REAL border_padding = 5.0;
-        PDF::Color border_color = PDF::Color(0, 0, 0);
     public:
         Page(HPDF_Doc pdf);
         HPDF_Page operator()() {return page; }
@@ -27,22 +24,26 @@ namespace PDF {
             return true;
         }
 
-        void setBorderWidth(HPDF_REAL width) {border_width = width; }
-        void setBorderColor(const PDF::Color &c) {border_color = c; }
-        void setBorderPadding(HPDF_REAL padding) {border_padding = padding; }
         HPDF_Font getFont(const std::string& font) const;
 
-        HPDF_REAL getCellHeight(PDF::Cell cell);
-        HPDF_REAL getCellWidth(PDF::Cell cell);
         HPDF_REAL getTextHeight() const;
-        HPDF_REAL getTextHeight(const std::string& font, int size) const;
+        HPDF_REAL getTextHeight(const std::string& font, HPDF_REAL size) const;
         HPDF_REAL getTextHeight(HPDF_Font fontPtr, HPDF_REAL size) const;
-        HPDF_REAL getTextWidth(const std::string& text, const std::string& font, int size) const;
+        HPDF_REAL getTextWidth(const std::string& text, const std::string& font, HPDF_REAL size) const;
         HPDF_REAL getTextWidth(const std::string& text, HPDF_Font fontPtr, HPDF_REAL size) const;
         HPDF_REAL getTextWidth(const std::string& text) const {return HPDF_Page_TextWidth(page, text.c_str());}
 
+        HPDF_REAL computeCellHeight(PDF::Cell cell);
+        HPDF_REAL computeCellWidth(PDF::Cell cell);
+
         std::tuple<HPDF_REAL, HPDF_REAL> addCell(PDF::Cell cell, HPDF_REAL x, HPDF_REAL y);
         std::tuple<HPDF_REAL, HPDF_REAL> addConstrainedCell(PDF::Cell cell, HPDF_REAL x, HPDF_REAL y, HPDF_REAL boxWidth=0, HPDF_REAL boxHeight=0);
-        HPDF_REAL addText(const std::string& text, const std::string& font, int size, int x, int y, bool isBordered = false, int height = 0);
+
+        std::tuple<HPDF_REAL, HPDF_REAL> addText(ClientRect rect, const std::string& text, const std::string& font, HPDF_REAL fontSize, Color backgroundColor, Color textColor);
+        std::tuple<HPDF_REAL, HPDF_REAL> addText(ClientRect rect, const std::string& text, Color backgroundColor, TextProperties properties);
+
+        HPDF_STATUS drawImage(ClientRect rect, const unsigned char *data, size_t size);
+        HPDF_STATUS drawQR(ClientRect rect, const std::string &qrText, int scale, int qrBlockSize);
+        void drawRectangle(ClientRect rect);
     };
 }
