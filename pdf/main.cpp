@@ -67,7 +67,12 @@ int main() {
             {"Jim Beam", "789 Oak St", "555-9101"},
         };
         report.run(PDF::ReportPDF::Parameters {
-            .getRow = [&](size_t r) { return rows[r]; },
+            .getRow = [&](size_t r) { 
+                if (r >= rows.size()) 
+                    return std::vector<std::string>{}; 
+                else 
+                    return rows[r]; 
+            },
             .createLineRect = [](PDF::Coord topLeft) { return PDF::ClientRect{.rect = {.topLeft = topLeft, .bottomRight = topLeft}}; },
             .renderRow = [&](const std::vector<std::string> &row, const PDF::ClientRect &lineRect) {
                 return report.drawLine(lineRect, row);

@@ -9,12 +9,17 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-find_path(HPDF_INCLUDE_DIR hpdf.h PATHS /usr/local/include /opt/libharu/include NO_DEFAULT_PATH)
-find_library(HPDF_LIBRARY NAMES hpdf libhpdf PATHS /usr/local/lib /opt/libharu/lib NO_DEFAULT_PATH)
+if(MSVC) 
+    find_package(unofficial-libharu CONFIG REQUIRED)
+else()
+    find_path(HPDF_INCLUDE_DIR hpdf.h PATHS /usr/local/include /opt/libharu/include NO_DEFAULT_PATH)
+    find_library(HPDF_LIBRARY NAMES hpdf libhpdf PATHS /usr/local/lib /opt/libharu/lib NO_DEFAULT_PATH)
 
-if (NOT HPDF_INCLUDE_DIR OR NOT HPDF_LIBRARY)
-    message(FATAL_ERROR "libHaru not found. Please set HPDF_INCLUDE_DIR and HPDF_LIBRARY.")
+    if (NOT HPDF_INCLUDE_DIR OR NOT HPDF_LIBRARY)
+        message(FATAL_ERROR "libHaru not found. Please set HPDF_INCLUDE_DIR and HPDF_LIBRARY.")
+    endif()
 endif()
+
 
 find_package(Boost REQUIRED COMPONENTS system json filesystem serialization program_options)
 find_package(fmt CONFIG REQUIRED)
@@ -23,25 +28,26 @@ find_package(fmt CONFIG REQUIRED)
 find_package(PNG REQUIRED)
 
 
-add_executable(${PROJECT_NAME} 
-"src/PDFWriter.cpp"
-"src/PDFPage.cpp"
-"src/PDFFont.cpp"
-"src/PDFError.cpp"
-"src/PDFCell.cpp"
-"qrcodegen.cpp"
-"src/qrgen.cpp"
-"ReportPDF.cpp"
-"main.cpp"
-)
+add_executable(${PROJECT_NAME} "src/PDFWriter.cpp" "src/PDFPage.cpp" "src/PDFFont.cpp" "src/PDFError.cpp" "src/PDFCell.cpp" "qrcodegen.cpp" "src/qrgen.cpp" "ReportPDF.cpp" "main.cpp")
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS /SUBSYSTEM:CONSOLE)
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${HPDF_INCLUDE_DIR} "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}")
-target_link_libraries(${PROJECT_NAME} 
-  -static-libgcc -static-libstdc++
-  Threads::Threads
-  fmt::fmt-header-only
-  ${fmt_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${HPDF_LIBRARY}
-  PNG::PNG
+if (MSVC) 
+    target_link_libraries(${PROJECT_NAME} 
+        -static
+        fmt::fmt-header-only 
+	    ${Boost_LIBRARIES}
+        unofficial::libharu::hpdf
+        PNG::PNG
+    )
+else()
+    target_link_libraries(${PROJECT_NAME} 
+        -static-libgcc -static-libstdc++
+        Threads::Threads
+        fmt::fmt-header-only
+        ${fmt_LIBRARIES}
+        ${Boost_LIBRARIES}
+        ${HPDF_LIBRARY}
+        PNG::PNG
 )
+endif()

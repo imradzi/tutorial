@@ -17,10 +17,10 @@ namespace PDF {
     }
 
     std::tuple<HPDF_REAL, HPDF_REAL> ReportPDF::writeList(ClientRect rect, const Cell &title, std::vector<Cell> &points, PointType pointType) {
-        return {0, 0};
+        return {0.0, 0.0};
     }  // return height;
     std::tuple<HPDF_REAL, HPDF_REAL> ReportPDF::writeLetterHead(ClientRect rect, const Cell &name2, const Cell &address, const Cell &regNo, const std::string &imageFileName, const std::string &eInvoiceQRstring) {
-        return {0, 0};
+        return {0.0, 0.0};
     }  // return lineNo where the below letterhead
 
     HPDF_STATUS ReportPDF::drawLine(ClientRect outerRect, const std::vector<std::string> &row) const {
@@ -52,6 +52,7 @@ namespace PDF {
         while (true) {
             if (!fn.getRow) break;
             auto row = fn.getRow(rowNo);
+            if (row.empty()) break;
             if (y > pageRect.bottomRight.y) {
                 if (fn.endOfPage) fn.endOfPage(page, pageNo);
                 y = pageRect.topLeft.y;
