@@ -23,10 +23,14 @@ namespace PDF {
 
     class Document {
         Writer writer;
+        PageOrientation orientation;
+        PageSizes size;
 
     public:
-        Document(const std::string& filename) : writer(filename) {}
-        auto AddPage(PageOrientation orientation = PageOrientation::Portrait, PageSizes size = PageSizes::A4) { return writer.addPage(size, orientation); }
+        Document(const std::string& filename, PageOrientation orientation = PageOrientation::Portrait, PageSizes size = PageSizes::A4) : writer(filename), orientation(orientation), size(size) {}
+        auto AddPage() { return writer.addPage(size, orientation); }
+        auto AddPage(PageOrientation orientation, PageSizes size) { return writer.addPage(size, orientation); }
+
         ~Document() {}
     };
 }

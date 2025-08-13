@@ -51,11 +51,11 @@ namespace PDF {
     public:
         Page(HPDF_Doc pdf, PageSizes size = PageSizes::A4, PageOrientation orientation=PageOrientation::Portrait, CoordinateSystem coordinateSystem=CoordinateSystem::TOP_LEFT);
         HPDF_Page operator()() {return page; }
-        Rect getWriteableRect() const {return pageRect.getInnerRect(); }
         static bool isFontExist(const std::string &fontName) {
             return (fonts.find(fontName) != fonts.end());
         }
-
+        Rect getInnerRect() const {return pageRect.getInnerRect(); }
+        Size getClientSize() const {return pageRect.getInnerRect().getSize(); }
         HPDF_STATUS setTransform(HPDF_REAL a, HPDF_REAL b, HPDF_REAL c, HPDF_REAL d, HPDF_REAL x, HPDF_REAL y) {
             return HPDF_Page_Concat(page, a, b, c, d, x, y);
         }
