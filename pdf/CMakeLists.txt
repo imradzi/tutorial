@@ -24,16 +24,17 @@ find_package(PNG REQUIRED)
 
 
 add_executable(${PROJECT_NAME} 
-"PDFWriter.cpp"
-"PDFPage.cpp"
-"PDFFont.cpp"
-"PDFError.cpp"
-"PDFCell.cpp"
+"src/PDFWriter.cpp"
+"src/PDFPage.cpp"
+"src/PDFFont.cpp"
+"src/PDFError.cpp"
+"src/PDFCell.cpp"
 "qrcodegen.cpp"
-"qrgen.cpp"
+"src/qrgen.cpp"
 "main.cpp"
 )
 
+target_include_directories(${PROJECT_NAME} PUBLIC ${HPDF_INCLUDE_DIR} "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}")
 target_link_libraries(${PROJECT_NAME} 
   -static-libgcc -static-libstdc++
   Threads::Threads

@@ -6,12 +6,12 @@
 #include <fmt/format.h>
 
 namespace PDF {
-    enum Justification {
-        justifyLeft,
-        justifyRight,
-        justifyCenter,
-        justifyTop,
-        justifyBottom
+    enum Alignment {
+        alignLeft,
+        alignRight,
+        alignCenter,
+        alignTop,
+        alignBottom
     };
     
     struct Coord {
@@ -37,8 +37,8 @@ namespace PDF {
         HPDF_Font font = nullptr;
         HPDF_REAL fontSize = 0;
         PDF::Color color = PDF::BLACK;
-        PDF::Justification horizontalJustify = PDF::Justification::justifyLeft;
-        PDF::Justification verticalJustify = PDF::Justification::justifyCenter;
+        PDF::Alignment horizontalAlignment = PDF::Alignment::alignLeft;
+        PDF::Alignment verticalAlignment = PDF::Alignment::alignCenter;
     };
 
     enum Position : int {   
@@ -79,8 +79,9 @@ namespace PDF {
         HPDF_REAL getBoundingSize(Position position) const {
             return borders[position].size + paddings[position].size + margins[position].size;
         }
-        Rect getOuterRect() { return rect; } // all including borders, paddings, margins
+        Rect getOuterRect() const { return rect; } // all including borders, paddings, margins
         Rect getBorderRect() const;
+        Rect getPaddingRect() const;
         Rect getInnerRect() const;
         std::string getString() const { return fmt::format("rect:{} margins:{} borders:{} paddings:{} backgroundColor:{}", rect.getString(), PDF::getString(margins), PDF::getString(borders), PDF::getString(paddings), backgroundColor.getString()); }
     };
