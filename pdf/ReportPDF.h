@@ -25,44 +25,29 @@ namespace PDF {
     };
 
     class ReportPDF : public PDF::Document {
+
         std::string fileName;
         std::string title;
         std::vector<Column> columns;
         int x0, y0, xR, w0, h0;
 
     public:
-        ReportPDF(const std::string &fileName, const std::string &title, std::vector<Column> &columns, PDF::PageOrientation orientation = PDF::PageOrientation::Portrait) : Document(fileName, orientation), fileName(fileName), title(title), columns(columns) {
-            computeColumnWeightage(columns);
-        }
-        virtual ~ReportPDF();
+        Page *currentPage = nullptr;
+        struct Parameters {
+            std::function<std::vector<std::string>(size_t rowNo)> getRow;
+            std::function<ClientRect(Coord)> createLineRect;
+            std::function<HPDF_REAL(const std::vector<std::string> &, const ClientRect &)> renderRow;
+            std::function<void(Page, int)> beginOfPage;
+            std::function<void(Page, int)> endOfPage;
+            std::function<void(Page, int)> endOfDocument;
+        };
 
-        void computeColumnWeightage() {
-            auto totalFlex = 0.0;
-            for (auto &column : columns) {
-                totalFlex += column.flex;
-            }
-            for (auto &column : columns) {
-                column.width = column.flex / totalFlex;
-            }
-        }
-
+        ReportPDF(const std::string &fileName, const std::string &title, const std::vector<Column> &columns, PDF::PageOrientation orientation = PDF::PageOrientation::Portrait);
+        ~ReportPDF();
+        void computeColumnWeightage();
         virtual std::tuple<HPDF_REAL, HPDF_REAL> writeList(ClientRect rect, const Cell &title, std::vector<Cell> &points, PointType pointType = PointType::dot);                                                      // return height;
         virtual std::tuple<HPDF_REAL, HPDF_REAL> writeLetterHead(ClientRect rect, const Cell &name2, const Cell &address, const Cell &regNo, const std::string &imageFileName, const std::string &eInvoiceQRstring);  // return lineNo where the below letterhead
-
-        void run(std::function<std::vector<std::string> getRow()> fnGetRow) {
-            int pageNo = 1;
-            PDF::Page page = addPage();
-            auto pageRect = page.getInnerRect();
-            HPDF_REAL y = pageRect.topLeft.y;
-            HPDF_REAL x = pageRect.topLeft.x;
-            while (true) {
-                auto row = fnGetRow();
-                if (y > pageRect.bottomRight.y) {
-                    //breakPage;
-                }
-                auto lineRect = ClientRect(x, y, pageRect.bottomRight.x, y + lineHeight);
-                auto [w, h] = renderRow(pageNo, row, lineRect);
-            }
-        }
+        HPDF_STATUS drawLine(ClientRect outerRect, const std::vector<std::string> &row) const;
+        void run(Parameters fn);
     };
 }

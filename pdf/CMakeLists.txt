@@ -31,6 +31,7 @@ add_executable(${PROJECT_NAME}
 "src/PDFCell.cpp"
 "qrcodegen.cpp"
 "src/qrgen.cpp"
+"ReportPDF.cpp"
 "main.cpp"
 )
 

@@ -9,6 +9,7 @@
 #include "PDFError.h"
 #include "PDFCell.h"
 #include "PDFColor.h"
+#include "ReportPDF.h"
 #include <exception>
 
 int main() {
@@ -21,6 +22,7 @@ int main() {
         PDF::Writer pdf("hello.pdf");
         pdf.enableCompression();  // after setjmp is active
         auto page = pdf.addPage();
+        HPDF_Page_SetFontAndSize(page(), page.getFont("Helvetica"), 12);
 
         PDF::ClientRect rect {
             .rect = {.topLeft = {0, 0}, .bottomRight = {500, 400}},
@@ -53,6 +55,24 @@ int main() {
                              .verticalAlignment = PDF::Alignment::alignCenter}},
             x, y + h + 2);
 
+        PDF::ReportPDF report("report.pdf", "Report", {
+                                                          {.flex = 1, .width = 0, .columnTitle = "Name", .cells = {}},
+                                                          {.flex = 1, .width = 0, .columnTitle = "Address", .cells = {}},
+                                                          {.flex = 1, .width = 0, .columnTitle = "Phone", .cells = {}},
+                                                      });
+
+        std::vector<std::vector<std::string>> rows = {
+            {"John Doe", "123 Main St", "555-1234"},
+            {"Jane Smith", "456 Elm St", "555-5678"},
+            {"Jim Beam", "789 Oak St", "555-9101"},
+        };
+        report.run(PDF::ReportPDF::Parameters {
+            .getRow = [&](size_t r) { return rows[r]; },
+            .createLineRect = [](PDF::Coord topLeft) { return PDF::ClientRect{.rect = {.topLeft = topLeft, .bottomRight = topLeft}}; },
+            .renderRow = [&](const std::vector<std::string> &row, const PDF::ClientRect &lineRect) {
+                return report.drawLine(lineRect, row);
+            },
+        });
     } catch (const std::exception& e) {
         std::cout << "Exception: " << e.what() << std::endl;
     } catch (...) {
