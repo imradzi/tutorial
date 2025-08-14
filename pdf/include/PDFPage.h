@@ -56,21 +56,26 @@ namespace PDF {
         }
         Rect getInnerRect() const {return pageRect.getInnerRect(); }
         Size getClientSize() const {return pageRect.getInnerRect().getSize(); }
-        HPDF_STATUS setTransform(HPDF_REAL a, HPDF_REAL b, HPDF_REAL c, HPDF_REAL d, HPDF_REAL x, HPDF_REAL y) {
+        HPDF_STATUS setTransform(HPDF_REAL a, HPDF_REAL b, HPDF_REAL c, HPDF_REAL d, HPDF_REAL x, HPDF_REAL y) const {
             return HPDF_Page_Concat(page, a, b, c, d, x, y);
         }
 
-        HPDF_STATUS setBottomLeftAsOrigin() {
+        HPDF_STATUS setBottomLeftAsOrigin() const {
             // Reset to default PDF coordinates (0,0 at bottom-left)
             return HPDF_Page_Concat(page, 1, 0, 0, 1, 0, 0);
         }
 
-        HPDF_STATUS setTopLeftAsOrigin() {
+        HPDF_STATUS setTopLeftAsOrigin() const {
             return HPDF_Page_Concat(page, 1, 0, 0, -1, 0, HPDF_Page_GetHeight(page));
         }
 
 
         HPDF_Font getFont(const std::string& font) const;
+        HPDF_STATUS setFont(const std::string &font, HPDF_REAL fontSize) const;
+        HPDF_STATUS setFont(HPDF_Font font, HPDF_REAL fontSize) const {
+            return HPDF_Page_SetFontAndSize(page, font, fontSize);
+        }
+        std::tuple<HPDF_Font, HPDF_REAL> getCurrentFont() const;
 
         HPDF_REAL getTextHeight() const;
         HPDF_REAL getTextHeight(const std::string& font, HPDF_REAL size) const;

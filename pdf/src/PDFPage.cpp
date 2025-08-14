@@ -20,13 +20,17 @@ namespace PDF {
             .rect = {
                 .topLeft = {0, 0},
                 .bottomRight = {HPDF_Page_GetWidth(page), HPDF_Page_GetHeight(page)}
-            }
+            },
+            .margins {{.size=40}, {.size=40}, {.size=40}, {.size=40}}
+            //.borders {{.size = 1, .color = PDF::BLACK}, {.size = 1, .color = PDF::BLACK}, {.size = 1, .color = PDF::BLACK}, {.size = 1, .color = PDF::BLACK}},
+            //.paddings {{.size = 40}, {.size = 40}, {.size = 40}, {.size = 40}}
         };
         if (coordinateSystem == CoordinateSystem::TOP_LEFT) {
             setTopLeftAsOrigin();
         } else {
             setBottomLeftAsOrigin();
         }
+        drawRectangle(pageRect, 0, PDF::WHITE);
     }
 
     HPDF_REAL Page::getTextWidth(const std::string& text, const std::string& font, HPDF_REAL size) const {
@@ -47,6 +51,18 @@ namespace PDF {
             return HPDF_GetFont(pdf, font.c_str(), nullptr);
         } 
         return HPDF_Page_GetCurrentFont(page);
+    }
+
+    HPDF_STATUS Page::setFont(const std::string& font, HPDF_REAL fontSize) const {
+        if (!isFontExist(font)) {
+            throw std::runtime_error(fmt::format("Error getting font: {}", font));
+        }
+        auto fontPtr = HPDF_GetFont(pdf, font.c_str(), nullptr);
+        return HPDF_Page_SetFontAndSize(page, fontPtr, fontSize);
+    }
+
+    std::tuple<HPDF_Font, HPDF_REAL> Page::getCurrentFont() const {
+        return { HPDF_Page_GetCurrentFont(page), HPDF_Page_GetCurrentFontSize(page) };
     }
 
     HPDF_REAL Page::getTextHeight(const std::string& font, HPDF_REAL size) const {
@@ -120,7 +136,7 @@ namespace PDF {
         
         auto height = boxHeight > 0 ? boxHeight: cell.rect.getInnerRect().getHeight();
         HPDF_REAL deltaHeight = 0;
-        if (height <= 0) {
+        if (height <= textHeight) {
             height = textHeight;
         } else {
             auto balanceHeight = height - textHeight;
@@ -178,7 +194,7 @@ namespace PDF {
         HPDF_REAL deltaWidth = 0;
         if (width <= 0) {
             width = textWidth;
-        } else {
+        } else if (width > textWidth) {
             auto balanceWidth = width - textWidth;
             if (prop.horizontalAlignment == PDF::Alignment::alignCenter) {
                 deltaWidth = balanceWidth / 2;
@@ -192,7 +208,7 @@ namespace PDF {
         
         auto height = outerRect.getInnerRect().getHeight();
         HPDF_REAL deltaHeight = 0;
-        if (height <= 0) {
+        if (height <= textHeight) {
             height = textHeight;
         } else {
             auto balanceHeight = height - textHeight;
@@ -268,8 +284,9 @@ namespace PDF {
      }
 
     HPDF_STATUS Page::drawWidget(ClientRect outerRect, Color backgroundColor, std::function<HPDF_STATUS(Rect)> draw) const {
-        auto width = outerRect.getInnerRect().getWidth() + outerRect.getBoundingSize(Position::left) + outerRect.getBoundingSize(Position::right);
-        auto height = outerRect.getInnerRect().getHeight() + outerRect.getBoundingSize(Position::top) + outerRect.getBoundingSize(Position::bottom);
+        auto innerRect = outerRect.getInnerRect();
+        auto width = innerRect.getWidth() + outerRect.getBoundingSize(Position::left) + outerRect.getBoundingSize(Position::right);
+        auto height = innerRect.getHeight() + outerRect.getBoundingSize(Position::top) + outerRect.getBoundingSize(Position::bottom);
 
         outerRect.rect.setSize(Size {width, height});
         if (outerRect.margins[Position::top].size > 0) fillWithColor(outerRect.getOuterRect(), outerRect.margins[Position::top].color);
@@ -277,7 +294,6 @@ namespace PDF {
         if (outerRect.paddings[Position::top].size > 0) fillWithColor(outerRect.getBorderRect(), outerRect.paddings[Position::top].color);
 
         // innermost rect where text is going to be drawn.
-        auto innerRect = outerRect.getInnerRect();
         fillWithColor(innerRect, backgroundColor);
         return draw(innerRect);
     }

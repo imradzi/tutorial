@@ -28,7 +28,8 @@ namespace PDF {
 
     public:
         Document(const std::string& filename, PageOrientation orientation = PageOrientation::Portrait, PageSizes size = PageSizes::A4) : writer(filename), orientation(orientation), size(size) {}
-        auto addPage() { return writer.addPage(size, orientation); }
+        virtual Page addPage() { return writer.addPage(size, orientation); }
+        auto getFont(const std::string& font) { return writer.getFont(font); }
         auto addPage(PageOrientation orientation, PageSizes size) { return writer.addPage(size, orientation); }
 
         ~Document() {}

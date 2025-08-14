@@ -7,42 +7,44 @@ namespace PDF {
     ReportPDF::~ReportPDF() {}
 
     void ReportPDF::computeColumnWeightage() {
+        if (currentPage == nullptr) return;
         auto totalFlex = 0.0;
         for (auto &column : columns) {
             totalFlex += column.flex;
         }
         for (auto &column : columns) {
-            column.width = column.flex / totalFlex;
+            column.width = column.flex / totalFlex * currentPage->getClientSize().width;
         }
     }
 
     std::tuple<HPDF_REAL, HPDF_REAL> ReportPDF::writeList(ClientRect rect, const Cell &title, std::vector<Cell> &points, PointType pointType) {
-        return {0.0, 0.0};
+        return { HPDF_REAL(0.0), HPDF_REAL(0.0)};
     }  // return height;
     std::tuple<HPDF_REAL, HPDF_REAL> ReportPDF::writeLetterHead(ClientRect rect, const Cell &name2, const Cell &address, const Cell &regNo, const std::string &imageFileName, const std::string &eInvoiceQRstring) {
-        return {0.0, 0.0};
+        return { HPDF_REAL(0.0), HPDF_REAL(0.0) };
     }  // return lineNo where the below letterhead
 
-    HPDF_STATUS ReportPDF::drawLine(ClientRect outerRect, const std::vector<std::string> &row) const {
-        return currentPage->drawWidget(outerRect, outerRect.backgroundColor, [this, row](Rect innerRect) {
+    HPDF_REAL ReportPDF::drawLine(ClientRect crect, const std::vector<std::string> &row, TextProperties prop) const {
+        HPDF_REAL height = 0;
+        auto rc = currentPage->drawWidget(crect, crect.backgroundColor, [this, row, prop, &height](Rect innerRect) {
             auto x = innerRect.topLeft.x;
             int colNo = 0;
             for (auto &str : row) {
                 innerRect.moveTo(Coord(x, innerRect.topLeft.y));
                 innerRect.setWidth(columns[colNo].width);
-                currentPage->addText(ClientRect {.rect = innerRect}, str, TextProperties {.font = currentPage->getFont("Helvetica"), .fontSize = 12, .color = PDF::BLACK, .horizontalAlignment = PDF::Alignment::alignLeft, .verticalAlignment = PDF::Alignment::alignCenter});
+                auto [w, h] = currentPage->addText(ClientRect {.rect = innerRect}, str, prop); // lost the margin, borders and padding.
                 x += columns[colNo].width;
+                height = std::max({ h, innerRect.getHeight(), height });
                 colNo++;
             }
             return HPDF_OK;
         });
+        return height;
     }
 
     void ReportPDF::run(ReportPDF::Parameters fn) {
         int pageNo = 1;
         auto page = addPage();
-        auto font = page.getFont("Helvetica");
-        currentPage = &page;
         auto pageRect = page.getInnerRect();
         auto y = pageRect.topLeft.y;
         auto x = pageRect.topLeft.x;
@@ -58,7 +60,6 @@ namespace PDF {
                 y = pageRect.topLeft.y;
                 pageNo++;
                 page = addPage();
-                currentPage = &page;
                 pageRect = page.getInnerRect();
                 if (fn.beginOfPage) fn.beginOfPage(page, pageNo);
             }

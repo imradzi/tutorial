@@ -6,6 +6,7 @@
 #include <fmt/format.h>
 
 namespace PDF {
+    class Page;
     enum Alignment {
         alignLeft,
         alignRight,
@@ -18,6 +19,8 @@ namespace PDF {
         HPDF_REAL x;
         HPDF_REAL y;
         std::string getString() const { return fmt::format("({},{})", x, y); }
+        Coord setY(HPDF_REAL n) { y = n; return *this; } // set y and return a copy;
+        Coord setX(HPDF_REAL n) { x = n; return *this; } // set x and return a copy;
     };
 
     struct Size {
@@ -39,6 +42,7 @@ namespace PDF {
         PDF::Color color = PDF::BLACK;
         PDF::Alignment horizontalAlignment = PDF::Alignment::alignLeft;
         PDF::Alignment verticalAlignment = PDF::Alignment::alignCenter;
+        HPDF_REAL getTextHeight(PDF::Page* page) const;
     };
 
     enum Position : int {   
@@ -60,6 +64,7 @@ namespace PDF {
         std::string getString() const { return fmt::format("topLeft:{} bottomRight:{}", topLeft.getString(), bottomRight.getString()); }
         Rect& moveTo(Coord coord);
         Rect& moveBy(Coord coord);
+        Rect& shrinkAndMove(HPDF_REAL top, HPDF_REAL right, HPDF_REAL bottom, HPDF_REAL left);
     };
 
     inline std::string getString(const std::vector<Border> &borders) {
@@ -71,19 +76,24 @@ namespace PDF {
     }
 
     struct ClientRect {
-        Rect rect;
+        HPDF_REAL getBoundingSize(Position position) const {
+            return borders[position].size + paddings[position].size + margins[position].size;
+        }
+        ClientRect& moveTo(Coord coord) { moveBy({ .x = coord.x - rect.topLeft.x , .y = coord.y - rect.topLeft.y }); }
+        ClientRect& moveBy(Coord coord);
+        Rect getOuterRect() const { return rect; } // all including borders, paddings, margins
+        Rect getBorderRect() const { return borderRect; }
+        Rect getPaddingRect() const { return paddingRect; }
+        Rect getInnerRect() const { return innerRect; }
+        std::string getString() const { return fmt::format("rect:{} margins:{} borders:{} paddings:{} backgroundColor:{}", rect.getString(), PDF::getString(margins), PDF::getString(borders), PDF::getString(paddings), backgroundColor.getString()); }
+
+        Rect rect, borderRect, paddingRect, innerRect;
         std::vector<Border> margins{{},{},{},{}}; //top, right, bottom, left
         std::vector<Border> borders{{},{},{},{}}; //top, right, bottom, left
         std::vector<Border> paddings{{},{},{},{}}; //top, right, bottom, left
         PDF::Color backgroundColor = PDF::LIGHT_GRAY;
-        HPDF_REAL getBoundingSize(Position position) const {
-            return borders[position].size + paddings[position].size + margins[position].size;
-        }
-        Rect getOuterRect() const { return rect; } // all including borders, paddings, margins
-        Rect getBorderRect() const;
-        Rect getPaddingRect() const;
-        Rect getInnerRect() const;
-        std::string getString() const { return fmt::format("rect:{} margins:{} borders:{} paddings:{} backgroundColor:{}", rect.getString(), PDF::getString(margins), PDF::getString(borders), PDF::getString(paddings), backgroundColor.getString()); }
+
+        static ClientRect&& init(ClientRect &&rect);
     };
 
     struct Cell {

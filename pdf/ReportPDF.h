@@ -21,16 +21,16 @@ namespace PDF {
         double flex;
         double width;
         std::string columnTitle;
-        PDF::Cell cells;
+        PDF::Cell cell;
     };
 
     class ReportPDF : public PDF::Document {
-
         std::string fileName;
         std::string title;
         std::vector<Column> columns;
         int x0, y0, xR, w0, h0;
-
+        HPDF_Font font = nullptr; 
+        HPDF_REAL fontSize;
     public:
         Page *currentPage = nullptr;
         struct Parameters {
@@ -42,12 +42,24 @@ namespace PDF {
             std::function<void(Page, int)> endOfDocument;
         };
 
+        Page addPage() override { 
+            auto page = PDF::Document::addPage(); 
+            currentPage = &page;
+            page.setFont(font, fontSize);
+            computeColumnWeightage();
+            return page;
+        }
+
         ReportPDF(const std::string &fileName, const std::string &title, const std::vector<Column> &columns, PDF::PageOrientation orientation = PDF::PageOrientation::Portrait);
         ~ReportPDF();
+        void setFont(const std::string& fontStr, HPDF_REAL fsz) {
+            font = PDF::Document::getFont(fontStr);
+            fontSize = fsz;
+        }
         void computeColumnWeightage();
         virtual std::tuple<HPDF_REAL, HPDF_REAL> writeList(ClientRect rect, const Cell &title, std::vector<Cell> &points, PointType pointType = PointType::dot);                                                      // return height;
         virtual std::tuple<HPDF_REAL, HPDF_REAL> writeLetterHead(ClientRect rect, const Cell &name2, const Cell &address, const Cell &regNo, const std::string &imageFileName, const std::string &eInvoiceQRstring);  // return lineNo where the below letterhead
-        HPDF_STATUS drawLine(ClientRect outerRect, const std::vector<std::string> &row) const;
+        HPDF_REAL drawLine(ClientRect outerRect, const std::vector<std::string> &row, TextProperties prop) const; // returns height;
         void run(Parameters fn);
     };
 }
