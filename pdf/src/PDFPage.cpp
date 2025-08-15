@@ -16,7 +16,7 @@ namespace PDF {
             throw std::runtime_error("Error setting page size");
         }
         ;
-        pageRect = ClientRect {
+        pageRect = ClientRect::init({
             .rect = {
                 .topLeft = {0, 0},
                 .bottomRight = {HPDF_Page_GetWidth(page), HPDF_Page_GetHeight(page)}
@@ -24,7 +24,7 @@ namespace PDF {
             .margins {{.size=40}, {.size=40}, {.size=40}, {.size=40}}
             //.borders {{.size = 1, .color = PDF::BLACK}, {.size = 1, .color = PDF::BLACK}, {.size = 1, .color = PDF::BLACK}, {.size = 1, .color = PDF::BLACK}},
             //.paddings {{.size = 40}, {.size = 40}, {.size = 40}, {.size = 40}}
-        };
+        });
         if (coordinateSystem == CoordinateSystem::TOP_LEFT) {
             setTopLeftAsOrigin();
         } else {
@@ -115,7 +115,7 @@ namespace PDF {
         if (prop.fontSize == 0) prop.fontSize = HPDF_Page_GetCurrentFontSize(page);
         HPDF_Page_SetFontAndSize(page, prop.font, prop.fontSize);
         ClientRect cellRect = cell.rect;
-        cellRect.rect.moveTo(Coord{x, y});
+        cellRect.rect.moveTo({x, y});
         return addText(cellRect, cell.text, prop, cell.rect.backgroundColor );
     }
 
@@ -283,12 +283,11 @@ namespace PDF {
          return HPDF_Page_Stroke(page);
      }
 
-    HPDF_STATUS Page::drawWidget(ClientRect outerRect, Color backgroundColor, std::function<HPDF_STATUS(Rect)> draw) const {
-        auto innerRect = outerRect.getInnerRect();
-        auto width = innerRect.getWidth() + outerRect.getBoundingSize(Position::left) + outerRect.getBoundingSize(Position::right);
-        auto height = innerRect.getHeight() + outerRect.getBoundingSize(Position::top) + outerRect.getBoundingSize(Position::bottom);
-
-        outerRect.rect.setSize(Size {width, height});
+    HPDF_STATUS Page::drawWidget(ClientRect outerRect, Color backgroundColor, std::function<HPDF_STATUS(Rect &)> draw) const {
+        auto& innerRect = outerRect.innerRect;
+        //auto width = innerRect.getWidth() + outerRect.getBoundingSize(Position::left) + outerRect.getBoundingSize(Position::right);
+        //auto height = innerRect.getHeight() + outerRect.getBoundingSize(Position::top) + outerRect.getBoundingSize(Position::bottom);
+        //outerRect.rect.setSize(Size {width, height});
         if (outerRect.margins[Position::top].size > 0) fillWithColor(outerRect.getOuterRect(), outerRect.margins[Position::top].color);
         if (outerRect.borders[Position::top].size > 0) drawRectangle(outerRect.getBorderRect(), outerRect.borders[Position::top].size, outerRect.borders[Position::top].color);
         if (outerRect.paddings[Position::top].size > 0) fillWithColor(outerRect.getBorderRect(), outerRect.paddings[Position::top].color);

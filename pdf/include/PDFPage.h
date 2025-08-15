@@ -97,7 +97,7 @@ namespace PDF {
         // ----- function below uses drawWidget to draw with margin, border and padding.
         // 
         // these draw functions on clientRect will paint the margin, border and padding.
-        HPDF_STATUS drawWidget(ClientRect outerRect, Color backgroundColor, std::function<HPDF_STATUS(Rect)> draw) const;
+        HPDF_STATUS drawWidget(ClientRect outerRect, Color backgroundColor, std::function<HPDF_STATUS(Rect &)> draw) const;
 
         // these draw text on clientRect with margin, border and padding.
         HPDF_STATUS drawText(ClientRect outerRect, const std::string& text, TextProperties prop, Color backgroundColor = PDF::WHITE) const ;

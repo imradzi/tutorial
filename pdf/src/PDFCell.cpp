@@ -15,6 +15,7 @@ namespace PDF {
 
     ClientRect &&ClientRect::init(ClientRect &&rect) {
         auto &borderRect = rect.borderRect;
+        borderRect = rect.getOuterRect();
         borderRect.shrinkAndMove(rect.margins[top].size, rect.margins[right].size, rect.margins[bottom].size, rect.margins[left].size);
         auto &paddingRect = rect.paddingRect;
         paddingRect = borderRect;

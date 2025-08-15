@@ -71,24 +71,31 @@ int main() {
         };
 
         auto prop = PDF::TextProperties{ .font = report.getFont("Helvetica"), .fontSize = 12, .color = PDF::BLACK, .horizontalAlignment = PDF::Alignment::alignLeft, .verticalAlignment = PDF::Alignment::alignCenter };
-        report.run(PDF::ReportPDF::Parameters {
-            .getRow = [rows](size_t r) { 
-                if (r >= rows.size()) 
-                    return std::vector<std::string>{}; 
-                else 
-                    return rows[r]; 
+        report.run(PDF::ReportPDF::Parameters{
+            .getRow = [rows](size_t r) {
+                if (r >= rows.size())
+                    return std::vector<std::string>{};
+                else
+                    return rows[r];
             },
-            .createLineRect = [&prop, &report](PDF::Coord topLeft) { 
-                auto rect = PDF::ClientRect::init({
-                    .rect = {.topLeft = topLeft, .bottomRight=topLeft},
+            .createLineRect = [&prop, &report](PDF::Coord topLeft, HPDF_REAL height) {
+                PDF::ClientRect rect = PDF::ClientRect::init({
+                    .rect = {.topLeft = topLeft, .bottomRight = topLeft},
                     .borders {{0.5, PDF::LIGHT_GRAY}, {0.5, PDF::LIGHT_GRAY}, {0.5, PDF::LIGHT_GRAY}, {0.5, PDF::LIGHT_GRAY}},
                     .paddings {{5}, {5}, {5}, {5}}
                 });
-                rect.rect.setHeight(report.currentPage->getTextHeight() + rect.getBoundingSize(PDF::top) + rect.getBoundingSize(PDF::bottom));
-                return rect;
+                rect.rect.setHeight(height + rect.getBoundingSize(PDF::top) + rect.getBoundingSize(PDF::bottom));
+                return PDF::ClientRect::init(std::move(rect)); // recalculate the inner rects;
             }, // same point for bottom right so that addText will use fontsize to calculate
-            .renderRow = [&](const std::vector<std::string> &row, const PDF::ClientRect &lineRect) {
-                return report.drawLine(lineRect, row, prop);
+            .createInnerRect = [](int col, PDF::Rect rect) {
+                return PDF::ClientRect::init({
+                    .rect = rect,
+                    .borders {{0.5, PDF::BLACK}, {0.5, PDF::BLACK}, {0.5, PDF::BLACK}, {0.5, PDF::BLACK}},
+                    .paddings { {0.0}, {5.0}, {0.0}, {5.0}}}
+                ); // in need color/margin/etc ... can be defined here.
+            },
+            .renderRow = [&](const std::vector<std::string> &row, const PDF::ClientRect &lineRect, std::function<PDF::ClientRect(int col, PDF::Rect rect)> fn) {
+                return report.drawLine(lineRect, row, prop, fn);
             },
         });
     } catch (const std::exception& e) {

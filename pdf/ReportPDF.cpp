@@ -24,31 +24,32 @@ namespace PDF {
         return { HPDF_REAL(0.0), HPDF_REAL(0.0) };
     }  // return lineNo where the below letterhead
 
-    HPDF_REAL ReportPDF::drawLine(ClientRect crect, const std::vector<std::string> &row, TextProperties prop) const {
+    ClientRect ReportPDF::drawLine(ClientRect crect, const std::vector<std::string> &row, TextProperties prop, std::function<ClientRect(int col, Rect innerRect)> fnCreateInnerRect) const {
         HPDF_REAL height = 0;
-        auto rc = currentPage->drawWidget(crect, crect.backgroundColor, [this, row, prop, &height](Rect innerRect) {
+        auto rc = currentPage->drawWidget(crect, crect.backgroundColor, [&](Rect innerRect) {
             auto x = innerRect.topLeft.x;
             int colNo = 0;
             for (auto &str : row) {
                 innerRect.moveTo(Coord(x, innerRect.topLeft.y));
                 innerRect.setWidth(columns[colNo].width);
-                auto [w, h] = currentPage->addText(ClientRect {.rect = innerRect}, str, prop); // lost the margin, borders and padding.
+                auto [w, h] = currentPage->addText(fnCreateInnerRect(colNo, innerRect), str, prop); // lost the margin, borders and padding.
                 x += columns[colNo].width;
                 height = std::max({ h, innerRect.getHeight(), height });
                 colNo++;
             }
             return HPDF_OK;
         });
-        return height;
+        crect.rect.setHeight(height + crect.getBoundingSize(PDF::top) + crect.getBoundingSize(PDF::bottom));
+        return ClientRect::init(std::move(crect));
     }
 
     void ReportPDF::run(ReportPDF::Parameters fn) {
         int pageNo = 1;
         auto page = addPage();
         auto pageRect = page.getInnerRect();
-        auto y = pageRect.topLeft.y;
-        auto x = pageRect.topLeft.x;
-        auto h = page.getTextHeight();
+        HPDF_REAL y = pageRect.topLeft.y;
+        HPDF_REAL x = pageRect.topLeft.x;
+        HPDF_REAL h = page.getTextHeight();
         if (fn.beginOfPage) fn.beginOfPage(page, pageNo);
         size_t rowNo = 0;
         while (true) {
@@ -64,8 +65,9 @@ namespace PDF {
                 if (fn.beginOfPage) fn.beginOfPage(page, pageNo);
             }
             if (!fn.renderRow) break;
-            auto h = fn.renderRow(row, fn.createLineRect(Coord(x, y)));
-            y += h;
+            auto rect = fn.renderRow(row, fn.createLineRect(Coord(x, y), h), fn.createInnerRect);
+            y += rect.getOuterRect().getHeight();
+            h = rect.getInnerRect().getHeight();
             rowNo++;
         }
         if (fn.endOfPage) fn.endOfPage(page, pageNo);

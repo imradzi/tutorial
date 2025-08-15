@@ -35,8 +35,9 @@ namespace PDF {
         Page *currentPage = nullptr;
         struct Parameters {
             std::function<std::vector<std::string>(size_t rowNo)> getRow;
-            std::function<ClientRect(Coord)> createLineRect;
-            std::function<HPDF_REAL(const std::vector<std::string> &, const ClientRect &)> renderRow;
+            std::function<ClientRect(Coord, HPDF_REAL height)> createLineRect;
+            std::function<ClientRect(int col, Rect rect)> createInnerRect;
+            std::function<ClientRect(const std::vector<std::string> &, const ClientRect &, std::function<ClientRect(int row, Rect rect)> fnCreateInner)> renderRow;
             std::function<void(Page, int)> beginOfPage;
             std::function<void(Page, int)> endOfPage;
             std::function<void(Page, int)> endOfDocument;
@@ -59,7 +60,7 @@ namespace PDF {
         void computeColumnWeightage();
         virtual std::tuple<HPDF_REAL, HPDF_REAL> writeList(ClientRect rect, const Cell &title, std::vector<Cell> &points, PointType pointType = PointType::dot);                                                      // return height;
         virtual std::tuple<HPDF_REAL, HPDF_REAL> writeLetterHead(ClientRect rect, const Cell &name2, const Cell &address, const Cell &regNo, const std::string &imageFileName, const std::string &eInvoiceQRstring);  // return lineNo where the below letterhead
-        HPDF_REAL drawLine(ClientRect outerRect, const std::vector<std::string> &row, TextProperties prop) const; // returns height;
+        ClientRect drawLine(ClientRect outerRect, const std::vector<std::string> &row, TextProperties prop, std::function<ClientRect(int col, Rect innerRect)> fnCreateInnerRect) const; // returns height;
         void run(Parameters fn);
     };
 }
