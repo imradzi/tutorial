@@ -186,6 +186,15 @@ namespace PDF {
         
     }
 
+    void Page::writeText(Coord position, const std::string& text) {
+        PDF::Color color = PDF::BLACK;
+        HPDF_Page_BeginText(page);
+        HPDF_Page_SetRGBFill(page, color.r, color.g, color.b);
+        HPDF_Page_SetTextMatrix(page, 1, 0, 0, -1, 0, HPDF_Page_GetHeight(page));
+        HPDF_Page_TextOut(page, position.x, position.y, text.c_str());
+        HPDF_Page_EndText(page);
+    }
+
     std::tuple<HPDF_REAL, HPDF_REAL> Page::addText(ClientRect outerRect, const std::string& text, TextProperties prop, Color backgroundColor) const {
         auto textHeight = getTextHeight(prop.font, prop.fontSize);
         auto textWidth = getTextWidth(text, prop.font, prop.fontSize);
@@ -305,7 +314,8 @@ namespace PDF {
     HPDF_STATUS Page::drawQR(Rect rect, const std::string &qrText, int scale, int border) const {
         unsigned char *pngBuf = NULL;
         size_t pngSize = 0;
-        if (qrcode_text_to_png_mem(qrText.c_str(), scale, border, &pngBuf, &pngSize, BLOCK_STYLE_ROUNDED)) {
+        auto [w, h] = qrcode_text_to_png_mem(qrText.c_str(), scale, border, &pngBuf, &pngSize, BLOCK_STYLE_ROUNDED);
+        if (w > 0 && h > 0) {
             auto rc = drawImage(rect, pngBuf, pngSize);
             free(pngBuf);
             return rc;

@@ -154,12 +154,13 @@ static bool png_encode_grayscale_to_memory(const uint8_t *gray, int width, int h
 }
 
 // Main function: text -> PNG bytes in memory
-bool qrcode_text_to_png_mem(const char *text, int scale, int border, unsigned char **pngBuf, size_t *pngSize, BlockStyle block_style) {
+std::tuple<int, int> qrcode_text_to_png_mem(const char *text, int scale, int border, unsigned char **pngBuf, size_t *pngSize, BlockStyle block_style) {
     GrayImage img = {0};
-    if (!render_qrcode_to_gray_buffer(text, scale, border, block_style, &img)) return false;
+    if (!render_qrcode_to_gray_buffer(text, scale, border, block_style, &img)) return { 0,0 };
 
     bool ok = png_encode_grayscale_to_memory(img.data, img.width, img.height, pngBuf, pngSize);
-
+    auto w = img.width; 
+    auto h = img.height;
     free(img.data);
-    return ok;
+    return { w, h};
 }

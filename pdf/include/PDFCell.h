@@ -21,6 +21,7 @@ namespace PDF {
         std::string getString() const { return fmt::format("({},{})", x, y); }
         Coord setY(HPDF_REAL n) { y = n; return *this; } // set y and return a copy;
         Coord setX(HPDF_REAL n) { x = n; return *this; } // set x and return a copy;
+        Coord moveBy(HPDF_REAL dx, HPDF_REAL dy) { x += dx; y += dy; return *this; }
     };
 
     struct Size {

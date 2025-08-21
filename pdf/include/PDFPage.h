@@ -44,7 +44,6 @@ namespace PDF {
     private:
         void fillWithColor(Rect rect, Color color) const;
         HPDF_STATUS drawText(Rect rect, HPDF_REAL deltaWidth, HPDF_REAL deltaHeight, const std::string& text, HPDF_Font font, HPDF_REAL fontSize, Color color = PDF::BLACK) const;
-        HPDF_STATUS drawRectangle(Rect rect, HPDF_REAL size = 1.0, Color color = PDF::BLACK) const;
         HPDF_STATUS drawImage(Rect rect, const unsigned char* data, size_t size) const;
         HPDF_STATUS drawQR(Rect rect, const std::string& qrText, int scale, int qrBlockSize) const;
 
@@ -92,7 +91,7 @@ namespace PDF {
         std::tuple<HPDF_REAL, HPDF_REAL> addText(ClientRect rect, const std::string& text, const std::string& font, HPDF_REAL fontSize, Color textColor = PDF::BLACK, Color backgroundColor = PDF::WHITE) const;
         std::tuple<HPDF_REAL, HPDF_REAL> addText(ClientRect rect, const std::string& text, TextProperties properties, Color backgroundColor = PDF::WHITE) const;
         std::tuple<HPDF_REAL, HPDF_REAL> addText(ClientRect rect, const std::string& text, Color textColor = PDF::BLACK, Color backgroundColor = PDF::WHITE) const;
-
+        void writeText(Coord position, const std::string& text);
         
         // ----- function below uses drawWidget to draw with margin, border and padding.
         // 
@@ -108,6 +107,7 @@ namespace PDF {
             });
         }
 
+        HPDF_STATUS drawRectangle(Rect rect, HPDF_REAL size = 1.0, Color color = PDF::BLACK) const;
         // these draw rectangle on clientRect with margin, border and padding.
         HPDF_STATUS drawRectangle(ClientRect outerRect, HPDF_REAL size = 1.0, Color color = PDF::BLACK, Color backgroundColor = PDF::WHITE) const {
             return drawWidget(outerRect, backgroundColor, [this, size, color](Rect innerRect) {
@@ -116,7 +116,7 @@ namespace PDF {
         }
 
         // these draw QR on clientRect with margin, border and padding.
-        HPDF_STATUS drawQR(ClientRect outerRect, const std::string& text, int scale, int qrBlockSize) {
+        HPDF_STATUS drawQR(ClientRect outerRect, const std::string& text, int scale, int qrBlockSize) const {
             return drawWidget(outerRect, PDF::WHITE, [this, text, scale, qrBlockSize](Rect innerRect) {
                 return drawQR(innerRect, text, scale, qrBlockSize);
             });
