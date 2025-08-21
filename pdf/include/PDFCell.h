@@ -80,7 +80,7 @@ namespace PDF {
         HPDF_REAL getBoundingSize(Position position) const {
             return borders[position].size + paddings[position].size + margins[position].size;
         }
-        ClientRect& moveTo(Coord coord) { moveBy({ .x = coord.x - rect.topLeft.x , .y = coord.y - rect.topLeft.y }); }
+        ClientRect& moveTo(Coord coord) { moveBy({ .x = coord.x - rect.topLeft.x , .y = coord.y - rect.topLeft.y }); return *this; }
         ClientRect& moveBy(Coord coord);
         Rect getOuterRect() const { return rect; } // all including borders, paddings, margins
         Rect getBorderRect() const { return borderRect; }
