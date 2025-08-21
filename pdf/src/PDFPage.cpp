@@ -314,9 +314,9 @@ namespace PDF {
     HPDF_STATUS Page::drawQR(Rect rect, const std::string &qrText, int scale, int border) const {
         unsigned char *pngBuf = NULL;
         size_t pngSize = 0;
-        auto [w, h] = qrcode_text_to_png_mem(qrText.c_str(), scale, border, &pngBuf, &pngSize, BLOCK_STYLE_ROUNDED);
+        auto [w, h] = qrcode_text_to_png_mem(qrText.c_str(), scale, border, &pngBuf, &pngSize, BLOCK_STYLE_ROUNDED); // dimension is in pixels
         if (w > 0 && h > 0) {
-            auto rc = drawImage(rect, pngBuf, pngSize);
+            auto rc = drawImage(rect, pngBuf, pngSize); // draw image will draw pixel in points. Depends on translation matrix.
             free(pngBuf);
             return rc;
         }
