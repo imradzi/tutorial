@@ -29,7 +29,9 @@ find_package(PNG REQUIRED)
 
 
 add_executable(${PROJECT_NAME} "src/PDFWriter.cpp" "src/PDFPage.cpp" "src/PDFFont.cpp" "src/PDFError.cpp" "src/PDFCell.cpp" "qrcodegen.cpp" "src/qrgen.cpp" "ReportPDF.cpp" "main.cpp")
-set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS /SUBSYSTEM:CONSOLE)
+if (MSVC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS /SUBSYSTEM:CONSOLE)
+endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${HPDF_INCLUDE_DIR} "${CMAKE_SOURCE_DIR}/include" "${CMAKE_SOURCE_DIR}")
 if (MSVC) 

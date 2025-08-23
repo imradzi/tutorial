@@ -22,19 +22,26 @@ int main() {
         PDF::Writer pdf("hello.pdf");
         pdf.enableCompression();  // after setjmp is active
         auto page = pdf.addPage();
-        HPDF_Page_SetFontAndSize(page(), page.getFont("Courier"), 8);
+        const auto fontSize = 3;
+        HPDF_Page_SetFontAndSize(page(), page.getFont("Courier"), fontSize);
         auto rect = page.getInnerRect();
+        auto height = page.getTextHeight() + 10;
         HPDF_REAL x = 10;
-        for (HPDF_REAL y = rect.topLeft.y; y < rect.bottomRight.y; y += 5) {
-            page.writeText({ .x = x, .y = y}, fmt::format("({}, {})", x, y));
+        for (HPDF_REAL y = rect.topLeft.y; y < rect.bottomRight.y; y += height+5) {
+            page.writeText({ .x = x, .y = y}, fmt::format("({}, {}), h={}", x, y, height));
 
-            PDF::Rect rect{ .topLeft {x + 50, y-5}, .bottomRight {x + 100, y} };
-            page.drawRectangle(rect, 0.5);
+            PDF::ClientRect innerRect = PDF::ClientRect::init({
+                .rect {.topLeft {x + 50, y - height}, .bottomRight {x + 100, y}}, 
+                .borders {{.size = 0.5, .color = PDF::BLACK}, {.size = 0.5, .color = PDF::BLACK}, {.size = 0.5, .color = PDF::BLACK}, {.size = 0.5, .color = PDF::BLACK}}
+            });
+
+            page.addText(innerRect, "Hello, World!", PDF::TextProperties{ .font = page.getFont("Courier"), .fontSize = fontSize, .color = PDF::BLACK, .horizontalAlignment = PDF::Alignment::alignCenter, .verticalAlignment = PDF::Alignment::alignCenter });
         }
 
-        PDF::Coord qrPoint{ 80, 40 };
+        PDF::Coord qrPoint {80, 40};
+        const auto size = 80;
         PDF::ClientRect crect = PDF::ClientRect::init({
-            .rect = {.topLeft = qrPoint, .bottomRight = qrPoint.moveBy(50,50)},
+            .rect = {.topLeft = qrPoint, .bottomRight = qrPoint.moveBy(size,size)},
             //.margins = {{10, PDF::RED}, {10, PDF::RED}, {10, PDF::RED}, {10, PDF::RED}},
             //.borders = {{2, PDF::BLUE}, {2, PDF::LIGHT_BLUE}, {2, PDF::LIGHT_BLUE}, {2, PDF::LIGHT_BLUE}},
             //.paddings = {{10, PDF::GREEN}, {10, PDF::BLUE}, {10, PDF::BLUE}, {10, PDF::BLUE}},
