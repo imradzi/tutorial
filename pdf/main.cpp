@@ -38,24 +38,24 @@ int main() {
             page.addText(innerRect, "Hello, World!", PDF::TextProperties{ .font = page.getFont("Courier"), .fontSize = fontSize, .color = PDF::BLACK, .horizontalAlignment = PDF::Alignment::alignCenter, .verticalAlignment = PDF::Alignment::alignCenter });
         }
 
-        PDF::Coord qrPoint {80, 40};
-        const auto size = 80;
-        PDF::ClientRect crect = PDF::ClientRect::init({
-            .rect = {.topLeft = qrPoint, .bottomRight = qrPoint.moveBy(size,size)},
-            //.margins = {{10, PDF::RED}, {10, PDF::RED}, {10, PDF::RED}, {10, PDF::RED}},
-            //.borders = {{2, PDF::BLUE}, {2, PDF::LIGHT_BLUE}, {2, PDF::LIGHT_BLUE}, {2, PDF::LIGHT_BLUE}},
-            //.paddings = {{10, PDF::GREEN}, {10, PDF::BLUE}, {10, PDF::BLUE}, {10, PDF::BLUE}},
-            //.backgroundColor = PDF::YELLOW 
-        });
+        // PDF::Coord qrPoint {80, 40};
+        // const auto size = 80;
+        // PDF::ClientRect crect = PDF::ClientRect::init({
+        //     .rect = {.topLeft = qrPoint, .bottomRight = qrPoint.moveBy(size,size)},
+        //     //.margins = {{10, PDF::RED}, {10, PDF::RED}, {10, PDF::RED}, {10, PDF::RED}},
+        //     //.borders = {{2, PDF::BLUE}, {2, PDF::LIGHT_BLUE}, {2, PDF::LIGHT_BLUE}, {2, PDF::LIGHT_BLUE}},
+        //     //.paddings = {{10, PDF::GREEN}, {10, PDF::BLUE}, {10, PDF::BLUE}, {10, PDF::BLUE}},
+        //     //.backgroundColor = PDF::YELLOW 
+        // });
 
-        page.drawQR(crect, 
-            "okajs jkdfk akjkd akjla dfjk akdjfl jakjdlal jalkjdlajl ladlkfalkj lkajdflakjl kajldjfalkj lajdlkjfalj "
-            "okajs jkdfk akjkd akjla dfjk akdjfl jakjdlal jalkjdlajl ladlkfalkj lkajdflakjl kajldjfalkj lajdlkjfalj "
-            "okajs jkdfk akjkd akjla dfjk akdjfl jakjdlal jalkjdlajl ladlkfalkj lkajdflakjl kajldjfalkj lajdlkjfalj "
-            "okajs jkdfk akjkd akjla dfjk akdjfl jakjdlal jalkjdlajl ladlkfalkj lkajdflakjl kajldjfalkj lajdlkjfalj "
-            "okajs jkdfk akjkd akjla dfjk akdjfl jakjdlal jalkjdlajl ladlkfalkj lkajdflakjl kajldjfalkj lajdlkjfalj "
-            "okajs jkdfk akjkd akjla dfjk akdjfl jakjdlal jalkjdlajl ladlkfalkj lkajdflakjl kajldjfalkj lajdlkjfalj "
-            , 20, 4);
+        // page.drawQR(crect, 
+        //     "okajs jkdfk akjkd akjla dfjk akdjfl jakjdlal jalkjdlajl ladlkfalkj lkajdflakjl kajldjfalkj lajdlkjfalj "
+        //     "okajs jkdfk akjkd akjla dfjk akdjfl jakjdlal jalkjdlajl ladlkfalkj lkajdflakjl kajldjfalkj lajdlkjfalj "
+        //     "okajs jkdfk akjkd akjla dfjk akdjfl jakjdlal jalkjdlajl ladlkfalkj lkajdflakjl kajldjfalkj lajdlkjfalj "
+        //     "okajs jkdfk akjkd akjla dfjk akdjfl jakjdlal jalkjdlajl ladlkfalkj lkajdflakjl kajldjfalkj lajdlkjfalj "
+        //     "okajs jkdfk akjkd akjla dfjk akdjfl jakjdlal jalkjdlajl ladlkfalkj lkajdflakjl kajldjfalkj lajdlkjfalj "
+        //     "okajs jkdfk akjkd akjla dfjk akdjfl jakjdlal jalkjdlajl ladlkfalkj lkajdflakjl kajldjfalkj lajdlkjfalj "
+        //     , 20, 4);
 
 
         //HPDF_REAL x = 10, y = 10;

@@ -343,17 +343,22 @@ namespace PDF {
 
         auto height = outerRect.getInnerRect().getHeight();
         HPDF_REAL deltaHeight = 0;
+        HPDF_REAL extraHeight = 0;
         if (height <= 0) {
             height = textHeight;
+            if (prop.verticalAlignment == PDF::Alignment::alignCenter) extraHeight = -height / 2;
         } else {
             auto balanceHeight = height - textHeight;
             if (prop.verticalAlignment == PDF::Alignment::alignCenter) {
                 deltaHeight = balanceHeight / 2;
+                extraHeight = -textHeight/2;
             } else if (prop.verticalAlignment == PDF::Alignment::alignTop) {
                 deltaHeight = balanceHeight;
+                extraHeight = -textHeight;
             }
             if (deltaHeight < 0) deltaHeight = 0;
         }
+        deltaHeight += extraHeight;
         return drawWidget(outerRect, backgroundColor, [this, text, prop, &deltaWidth, &deltaHeight](Rect innerRect) {
             return drawText(innerRect, deltaWidth, deltaHeight, text, prop.font, prop.fontSize, prop.color);
         });
