@@ -157,23 +157,27 @@ main() {
         exit 1
     fi
     
-    # Install functions
+# Install functions
     echo -e "${YELLOW}Choose installation method:${NC}"
-    echo "1. Install in mysql system database (recommended)"
-    echo "2. Install in separate ulid_functions schema"
-    echo "3. Install both"
-    read -p "Enter choice (1-3): " choice
+    echo "1. Install basic functions in mysql system database"
+    echo "2. Install IMPROVED functions with proper randomness in mysql system database (recommended)"
+    echo "3. Install in separate ulid_functions schema"
+    echo "4. Install both basic and improved"
+    read -p "Enter choice (1-4): " choice
     
     case $choice in
         1)
             install_system_functions
             ;;
         2)
-            install_schema_functions
+            install_improved_functions
             ;;
         3)
-            install_system_functions
             install_schema_functions
+            ;;
+        4)
+            install_system_functions
+            install_improved_functions
             ;;
         *)
             echo -e "${RED}Invalid choice${NC}"
