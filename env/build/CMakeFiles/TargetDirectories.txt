@@ -1,0 +1,3 @@
+/home/radzi/cmake/tutorial/env/build/CMakeFiles/tut.dir
+/home/radzi/cmake/tutorial/env/build/CMakeFiles/edit_cache.dir
+/home/radzi/cmake/tutorial/env/build/CMakeFiles/rebuild_cache.dir
