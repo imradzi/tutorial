@@ -1,0 +1,94 @@
+# Example: Advanced usage of SqlGeneration.cmake module
+# This shows different ways to use the SQL generation functions
+
+cmake_minimum_required(VERSION 3.21)
+project(advanced_sql_example)
+
+# Include the SQL generation module
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/../cmake")
+include(SqlGeneration)
+
+# =============================================================================
+# EXAMPLE 1: Simple one-liner setup (recommended for most cases)
+# =============================================================================
+setup_sql_generation(
+    TARGET_NAME generate_sql_sources
+    OUTPUT_SOURCES SQL_SOURCES
+    SQL_FILES "auth.sql" "logging.sql" "reporting.sql"
+    CPP_FILES "bkk_auth.cpp" "bkk_logging.cpp" "bkk_reporting.cpp"
+    VARIABLE_NAMES "bkk_AUTH_QUERY" "bkk_LOGGING_QUERY" "bkk_REPORTING_QUERY"
+)
+
+# =============================================================================
+# EXAMPLE 2: Step-by-step approach for more control
+# =============================================================================
+# Generate files
+add_sql_sources(
+    OUTPUT_SOURCES CUSTOM_SOURCES
+    OUTPUT_HEADERS CUSTOM_HEADERS
+    SQL_FILES "migration1.sql" "migration2.sql"
+    CPP_FILES "bkk_migration1.cpp" "bkk_migration2.cpp" 
+    VARIABLE_NAMES "bkk_MIGRATION1" "bkk_MIGRATION2"
+)
+
+# Create custom target with specific dependencies
+add_sql_target(
+    TARGET_NAME generate_migrations
+    SOURCES ${CUSTOM_SOURCES}
+    HEADERS ${CUSTOM_HEADERS}
+)
+
+# =============================================================================
+# EXAMPLE 3: Multiple groups of SQL files
+# =============================================================================
+# Core database operations
+setup_sql_generation(
+    TARGET_NAME generate_core_sql
+    OUTPUT_SOURCES CORE_SQL_SOURCES
+    SQL_FILES "create_tables.sql" "indexes.sql" "constraints.sql"
+    CPP_FILES "bkk_tables.cpp" "bkk_indexes.cpp" "bkk_constraints.cpp"
+    VARIABLE_NAMES "bkk_CREATE_TABLES" "bkk_INDEXES" "bkk_CONSTRAINTS"
+)
+
+# Application queries
+setup_sql_generation(
+    TARGET_NAME generate_app_sql  
+    OUTPUT_SOURCES APP_SQL_SOURCES
+    SQL_FILES "user_queries.sql" "product_queries.sql" "order_queries.sql"
+    CPP_FILES "bkk_users.cpp" "bkk_products.cpp" "bkk_orders.cpp"
+    VARIABLE_NAMES "bkk_USER_QUERIES" "bkk_PRODUCT_QUERIES" "bkk_ORDER_QUERIES"
+)
+
+# =============================================================================
+# EXAMPLE 4: Creating executables with different SQL sets
+# =============================================================================
+# Core library with database schema
+add_library(core_db STATIC ${CORE_SQL_SOURCES})
+add_dependencies(core_db generate_core_sql)
+
+# Application with business logic queries  
+add_executable(my_app "main.cpp" ${APP_SQL_SOURCES})
+add_dependencies(my_app generate_app_sql)
+target_link_libraries(my_app core_db)
+
+# Migration tool
+add_executable(migrate_db "migrate.cpp" ${CUSTOM_SOURCES})
+add_dependencies(migrate_db generate_migrations)
+target_link_libraries(migrate_db core_db)
+
+# =============================================================================  
+# EXAMPLE 5: Error handling and validation
+# =============================================================================
+# This will automatically validate:
+# - All SQL files exist
+# - Lists have matching lengths
+# - No duplicate variable names
+# - Proper file permissions
+try_compile(SQL_TEST_RESULT
+    ${CMAKE_BINARY_DIR}/test_sql_compilation
+    SOURCES ${SQL_SOURCES} ${CUSTOM_SOURCES} ${CORE_SQL_SOURCES} ${APP_SQL_SOURCES}
+)
+
+if(NOT SQL_TEST_RESULT)
+    message(WARNING "SQL compilation test failed - some generated files may have issues")
+endif()
