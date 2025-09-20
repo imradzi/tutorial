@@ -365,7 +365,13 @@ int main(int argc, char* argv[]) {
         // where the first parameter would be one of these ULIDs
         
         std::cout << "\n=== Database Query Results ===" << std::endl;
-        auto rs = sess.sql("select id, state_code, name from address_state").execute();
+        auto rs = sess.sql(
+                          "SET FOREIGN_KEY_CHECKS = 0; \n"
+                          "-- comment --\n"
+                          "select id, state_code, name "
+                          " -- another comment\n"
+                          "from address_state;")
+                      .execute();
         auto colMap = getColumnMap(rs);
 
         for (auto x : rs) {
