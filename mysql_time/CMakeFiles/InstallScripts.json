@@ -1,0 +1,7 @@
+{
+	"InstallScripts" : 
+	[
+		"/home/radzi/cmake/tutorial/mysql_time/cmake_install.cmake"
+	],
+	"Parallel" : false
+}

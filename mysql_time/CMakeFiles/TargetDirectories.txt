@@ -1,0 +1,3 @@
+/home/radzi/cmake/tutorial/mysql_time/CMakeFiles/tut.dir
+/home/radzi/cmake/tutorial/mysql_time/CMakeFiles/edit_cache.dir
+/home/radzi/cmake/tutorial/mysql_time/CMakeFiles/rebuild_cache.dir
