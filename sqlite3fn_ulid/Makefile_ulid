@@ -1,0 +1,46 @@
+# Makefile for ULID SQLite extension
+
+# Compiler and flags
+CC ?= cc
+OS := $(shell uname -s)
+
+# Try to get SQLite CFLAGS from pkg-config if available
+SQLITE_CFLAGS := $(shell pkg-config --cflags sqlite3 2>/dev/null)
+
+# Base compiler flags
+CFLAGS ?= -O2 -fPIC -std=c11 -Wall -Wextra -Werror -fvisibility=hidden
+
+# Add SQLite flags if available
+ifneq ($(SQLITE_CFLAGS),)
+    CFLAGS += $(SQLITE_CFLAGS)
+endif
+
+# Platform-specific targets
+ifeq ($(OS), Linux)
+    TARGET = ulid_extension.so
+    LDFLAGS = -shared
+else ifeq ($(OS), Darwin)
+    TARGET = ulid_extension.dylib  
+    LDFLAGS = -bundle -undefined dynamic_lookup
+else
+    TARGET = ulid_extension.so
+    LDFLAGS = -shared
+endif
+
+# Default target
+all: $(TARGET)
+
+# Build the extension
+$(TARGET): ulid_extension.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $<
+
+# Clean build artifacts
+clean:
+	rm -f *.so *.dylib *.dll *.o
+
+# Test target (optional)
+test: $(TARGET)
+	@echo "Testing ULID extension..."
+	@sqlite3 :memory: ".load ./$(TARGET)" "SELECT ulid_to_string(ulid_from_string('01ARZ3NDEKTSV4RRFFQ69G5FAV'));" || echo "Test failed"
+
+.PHONY: all clean test
