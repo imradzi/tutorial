@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 23)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-find_package(Boost COMPONENTS system json filesystem serialization program_options REQUIRED)
+find_package(Boost COMPONENTS json filesystem serialization program_options REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 

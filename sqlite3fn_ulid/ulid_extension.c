@@ -47,92 +47,6 @@ static uint64_t read_ts48_be(const uint8_t ulid[16]) {
            ((uint64_t)ulid[5]);
 }
 
-// Helper: Write 48-bit timestamp to first 6 bytes of ULID (big-endian)
-static void write_ts48_be(uint8_t out[16], uint64_t ts) {
-    out[0] = (ts >> 40) & 0xFF;
-    out[1] = (ts >> 32) & 0xFF;
-    out[2] = (ts >> 24) & 0xFF;
-    out[3] = (ts >> 16) & 0xFF;
-    out[4] = (ts >> 8) & 0xFF;
-    out[5] = ts & 0xFF;
-}
-
-// Helper: Encode 48-bit timestamp to 10 Base32 characters
-static void encode_ts48_to_10(uint64_t ts, char out10[10]) {
-    for (int i = 9; i >= 0; i--) {
-        out10[i] = B32_ALPHABET[ts % 32];
-        ts /= 32;
-    }
-}
-
-// Helper: Decode 10 Base32 values to 48-bit timestamp
-static int decode_10_to_ts48(const uint8_t v[10], uint64_t* ts_out) {
-    uint64_t ts = 0;
-    for (int i = 0; i < 10; i++) {
-        // Check for overflow before multiplication
-        if (ts > (UINT64_MAX - v[i]) / 32) {
-            return -1; // Overflow
-        }
-        ts = ts * 32 + v[i];
-        // Check if we exceed 48 bits (2^48 - 1 = 0xFFFFFFFFFFFF)
-        if (ts > 0xFFFFFFFFFFFFULL) {
-            return -1; // Exceeds 48 bits
-        }
-    }
-    *ts_out = ts;
-    return 0;
-}
-
-// Helper: Shift 80-bit buffer right by 5 bits, return the shifted-out 5 bits
-static uint8_t big_shr_5(uint8_t buf[10]) {
-    uint8_t carry = 0;
-    uint8_t result = buf[9] & 0x1F; // Bottom 5 bits of last byte
-    
-    for (int i = 0; i < 10; i++) {
-        uint8_t next_carry = (buf[i] & 0x1F) << 3; // Bottom 5 bits become top 3 bits of carry
-        buf[i] = (buf[i] >> 5) | carry;
-        carry = next_carry;
-    }
-    
-    return result;
-}
-
-// Helper: Shift 80-bit buffer left by 5 bits and add 5-bit value
-static int big_shl_5_add(uint8_t buf[10], uint8_t add5) {
-    uint16_t carry = add5 & 0x1F;
-    
-    for (int i = 9; i >= 0; i--) {
-        carry = (carry + ((uint16_t)buf[i] << 5));
-        buf[i] = carry & 0xFF;
-        carry >>= 8;
-    }
-    
-    return carry; // Non-zero indicates overflow
-}
-
-// Helper: Encode 80-bit randomness to 16 Base32 characters  
-static void encode_rand80_to_16(const uint8_t rand10[10], char out16[16]) {
-    uint8_t tmp[10];
-    memcpy(tmp, rand10, 10);
-    
-    for (int i = 15; i >= 0; i--) {
-        out16[i] = B32_ALPHABET[big_shr_5(tmp)];
-    }
-}
-
-// Helper: Decode 16 Base32 values to 80-bit randomness
-static int decode_16_to_rand80(const uint8_t v[16], uint8_t rand10_out[10]) {
-    memset(rand10_out, 0, 10);
-    
-    for (int i = 0; i < 16; i++) {
-        if (big_shl_5_add(rand10_out, v[i])) {
-            return -1; // Overflow (shouldn't happen with exactly 16 digits)
-        }
-    }
-    
-    return 0;
-}
-
 // Helper: Sanitize input string (remove hyphens/spaces, convert to uppercase)
 static int sanitize_ulid_string(const char* input, char* output, int max_len) {
     int j = 0;
@@ -172,16 +86,33 @@ static void ulid_to_string_sql(sqlite3_context* context, int argc, sqlite3_value
         return;
     }
     
-    // Extract timestamp (first 6 bytes) and randomness (last 10 bytes)
-    uint64_t ts = read_ts48_be(blob);
-    const uint8_t* rand10 = blob + 6;
-    
-    // Encode to Base32
+    // Bit-streaming encoding: treat entire 16 bytes as continuous 128-bit stream
     char result[27]; // 26 chars + null terminator
-    encode_ts48_to_10(ts, result);
-    encode_rand80_to_16(rand10, result + 10);
-    result[26] = '\0';
+    uint64_t accumulator = 0;
+    int bits_accumulated = 0;
+    int result_idx = 0;
     
+    for (int i = 0; i < 16; i++) {
+        accumulator = (accumulator << 8) | blob[i];
+        bits_accumulated += 8;
+        
+        while (bits_accumulated >= 5) {
+            bits_accumulated -= 5;
+            result[result_idx++] = B32_ALPHABET[(accumulator >> bits_accumulated) & 0x1F];
+        }
+    }
+    
+    // Handle remaining bits (if any) by left-padding with zeros
+    if (bits_accumulated > 0) {
+        result[result_idx++] = B32_ALPHABET[(accumulator << (5 - bits_accumulated)) & 0x1F];
+    }
+    
+    // Pad to 26 characters if needed
+    while (result_idx < 26) {
+        result[result_idx++] = '0';
+    }
+    
+    result[26] = '\0';
     sqlite3_result_text(context, result, 26, SQLITE_TRANSIENT);
 }
 
@@ -211,35 +142,29 @@ static void ulid_from_string_sql(sqlite3_context* context, int argc, sqlite3_val
         return;
     }
     
-    // Decode to Base32 values
-    uint8_t decoded[26];
+    // Bit-streaming decoding: treat 26 Base32 chars as continuous bit stream
+    uint8_t result[16];
+    uint64_t accumulator = 0;
+    int bits_accumulated = 0;
+    int byte_index = 0;
+    
     for (int i = 0; i < 26; i++) {
         uint8_t val = B32_DECODE[(unsigned char)sanitized[i]];
         if (val == 0xFF) {
             sqlite3_result_error(context, "ulid_from_string: invalid character in ULID", -1);
             return;
         }
-        decoded[i] = val;
+        
+        // Add 5 bits to accumulator
+        accumulator = (accumulator << 5) | val;
+        bits_accumulated += 5;
+        
+        // Extract complete bytes (8 bits)
+        while (bits_accumulated >= 8 && byte_index < 16) {
+            bits_accumulated -= 8;
+            result[byte_index++] = (uint8_t)((accumulator >> bits_accumulated) & 0xFF);
+        }
     }
-    
-    // Decode timestamp (first 10 characters)
-    uint64_t ts;
-    if (decode_10_to_ts48(decoded, &ts) != 0) {
-        sqlite3_result_error(context, "ulid_from_string: timestamp overflow", -1);
-        return;
-    }
-    
-    // Decode randomness (last 16 characters)
-    uint8_t rand10[10];
-    if (decode_16_to_rand80(decoded + 10, rand10) != 0) {
-        sqlite3_result_error(context, "ulid_from_string: randomness decode error", -1);
-        return;
-    }
-    
-    // Compose 16-byte ULID
-    uint8_t result[16];
-    write_ts48_be(result, ts);
-    memcpy(result + 6, rand10, 10);
     
     sqlite3_result_blob(context, result, 16, SQLITE_TRANSIENT);
 }
