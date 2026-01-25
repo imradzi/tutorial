@@ -9,17 +9,19 @@ struct PdfConfig {
     std::string marginLeft = "15mm";
     std::string marginRight = "15mm";
     bool enableLocalFileAccess = true;  // needed for local images
+    std::string wkhtmltopdfPath = "wkhtmltopdf";  // path to executable
 };
 
+// Thread-safe PDF generator using wkhtmltopdf process spawning
 class PdfGenerator {
 public:
     PdfGenerator();
     explicit PdfGenerator(const PdfConfig& config);
-    ~PdfGenerator();
+    ~PdfGenerator() = default;
     
-    // Initialize/deinitialize the library (call once at app start/end)
-    static bool initLibrary();
-    static void deinitLibrary();
+    // No-op for backward compatibility (process-based approach needs no init)
+    static bool initLibrary() { return true; }
+    static void deinitLibrary() {}
     
     // Generate PDF from HTML content (string)
     bool generate(const std::string& htmlContent, const std::string& outputPath);
@@ -32,8 +34,13 @@ public:
     
 private:
     PdfConfig config_;
-    static bool initialized_;
     
-    bool doConvert(const std::string& htmlContent, const std::string& outputPath, 
-                   std::string* outputBuffer = nullptr);
+    // Create temporary HTML file and return its path
+    std::string createTempHtmlFile(const std::string& htmlContent);
+    
+    // Build command line arguments
+    std::string buildCommand(const std::string& inputPath, const std::string& outputPath);
+    
+    // Execute wkhtmltopdf process
+    bool executeProcess(const std::string& command);
 };

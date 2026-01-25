@@ -1,123 +1,144 @@
 #include "pdf_generator.h"
-#include <wkhtmltox/pdf.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <cstring>
+#include <cstdio>
+#include <cstdlib>
+#include <array>
+#include <random>
+#include <filesystem>
 
-bool PdfGenerator::initialized_ = false;
+namespace fs = std::filesystem;
 
-PdfGenerator::PdfGenerator() : config_() {
-    if (!initialized_) {
-        initLibrary();
-    }
-}
+PdfGenerator::PdfGenerator() : config_() {}
 
-PdfGenerator::PdfGenerator(const PdfConfig& config) : config_(config) {
-    if (!initialized_) {
-        initLibrary();
-    }
-}
+PdfGenerator::PdfGenerator(const PdfConfig& config) : config_(config) {}
 
-PdfGenerator::~PdfGenerator() {
-    // Don't deinit here - let the app control library lifecycle
-}
-
-bool PdfGenerator::initLibrary() {
-    if (initialized_) return true;
+std::string PdfGenerator::createTempHtmlFile(const std::string& htmlContent) {
+    // Generate unique temp filename
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(100000, 999999);
     
-    // Initialize with graphics support disabled (headless mode)
-    if (wkhtmltopdf_init(0) != 1) {
-        std::cerr << "Failed to initialize wkhtmltopdf library" << std::endl;
-        return false;
+    fs::path tempDir = fs::temp_directory_path();
+    std::string tempFile = (tempDir / ("pdf_gen_" + std::to_string(dis(gen)) + ".html")).string();
+    
+    std::ofstream ofs(tempFile);
+    if (!ofs) {
+        std::cerr << "Failed to create temp file: " << tempFile << std::endl;
+        return "";
     }
-    initialized_ = true;
-    return true;
+    ofs << htmlContent;
+    ofs.close();
+    
+    return tempFile;
 }
 
-void PdfGenerator::deinitLibrary() {
-    if (initialized_) {
-        wkhtmltopdf_deinit();
-        initialized_ = false;
+std::string PdfGenerator::buildCommand(const std::string& inputPath, const std::string& outputPath) {
+    std::ostringstream cmd;
+    
+    cmd << config_.wkhtmltopdfPath
+        << " --quiet"
+        << " --page-size " << config_.pageSize
+        << " --margin-top " << config_.marginTop
+        << " --margin-bottom " << config_.marginBottom
+        << " --margin-left " << config_.marginLeft
+        << " --margin-right " << config_.marginRight;
+    
+    if (config_.enableLocalFileAccess) {
+        cmd << " --enable-local-file-access";
     }
+    
+    cmd << " \"" << inputPath << "\" \"" << outputPath << "\"";
+    
+    return cmd.str();
+}
+
+bool PdfGenerator::executeProcess(const std::string& command) {
+    int result = std::system(command.c_str());
+    return (result == 0);
 }
 
 bool PdfGenerator::generate(const std::string& htmlContent, const std::string& outputPath) {
-    return doConvert(htmlContent, outputPath, nullptr);
+    // Create temp HTML file
+    std::string tempHtml = createTempHtmlFile(htmlContent);
+    if (tempHtml.empty()) {
+        return false;
+    }
+    
+    // Build and execute command
+    std::string cmd = buildCommand(tempHtml, outputPath);
+    bool success = executeProcess(cmd);
+    
+    // Cleanup temp file
+    std::remove(tempHtml.c_str());
+    
+    if (success) {
+        std::cout << "PDF generated: " << outputPath << std::endl;
+    } else {
+        std::cerr << "PDF conversion failed" << std::endl;
+    }
+    
+    return success;
 }
 
 bool PdfGenerator::generateFromFile(const std::string& htmlPath, const std::string& outputPath) {
-    // Read file content
-    std::ifstream file(htmlPath);
-    if (!file) {
+    // Check if file exists
+    if (!fs::exists(htmlPath)) {
         std::cerr << "Failed to open file: " << htmlPath << std::endl;
         return false;
     }
-    std::stringstream buffer;
-    buffer << file.rdbuf();
-    return generate(buffer.str(), outputPath);
+    
+    // Build and execute command directly with the HTML file
+    std::string cmd = buildCommand(htmlPath, outputPath);
+    bool success = executeProcess(cmd);
+    
+    if (success) {
+        std::cout << "PDF generated: " << outputPath << std::endl;
+    } else {
+        std::cerr << "PDF conversion failed" << std::endl;
+    }
+    
+    return success;
 }
 
 bool PdfGenerator::generateToBuffer(const std::string& htmlContent, std::string& outputBuffer) {
-    return doConvert(htmlContent, "", &outputBuffer);
-}
-
-bool PdfGenerator::doConvert(const std::string& htmlContent, const std::string& outputPath,
-                              std::string* outputBuffer) {
-    if (!initialized_) {
-        std::cerr << "Library not initialized" << std::endl;
+    // Create temp HTML file
+    std::string tempHtml = createTempHtmlFile(htmlContent);
+    if (tempHtml.empty()) {
         return false;
     }
     
-    // Create global settings
-    wkhtmltopdf_global_settings* gs = wkhtmltopdf_create_global_settings();
+    // Create temp output file
+    fs::path tempDir = fs::temp_directory_path();
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(100000, 999999);
+    std::string tempPdf = (tempDir / ("pdf_gen_" + std::to_string(dis(gen)) + ".pdf")).string();
     
-    // Set output file (empty string = output to memory)
-    if (!outputPath.empty()) {
-        wkhtmltopdf_set_global_setting(gs, "out", outputPath.c_str());
-    }
+    // Build and execute command
+    std::string cmd = buildCommand(tempHtml, tempPdf);
+    bool success = executeProcess(cmd);
     
-    // Page settings
-    wkhtmltopdf_set_global_setting(gs, "size.pageSize", config_.pageSize.c_str());
-    wkhtmltopdf_set_global_setting(gs, "margin.top", config_.marginTop.c_str());
-    wkhtmltopdf_set_global_setting(gs, "margin.bottom", config_.marginBottom.c_str());
-    wkhtmltopdf_set_global_setting(gs, "margin.left", config_.marginLeft.c_str());
-    wkhtmltopdf_set_global_setting(gs, "margin.right", config_.marginRight.c_str());
-    
-    // Create object settings for HTML content
-    wkhtmltopdf_object_settings* os = wkhtmltopdf_create_object_settings();
-    
-    // Enable local file access for images
-    if (config_.enableLocalFileAccess) {
-        wkhtmltopdf_set_object_setting(os, "load.blockLocalFileAccess", "false");
-    }
-    
-    // Create converter
-    wkhtmltopdf_converter* converter = wkhtmltopdf_create_converter(gs);
-    
-    // Add the HTML content as an object
-    wkhtmltopdf_add_object(converter, os, htmlContent.c_str());
-    
-    // Perform conversion
-    bool success = (wkhtmltopdf_convert(converter) == 1);
-    
-    // If outputting to buffer, get the data
-    if (success && outputBuffer != nullptr) {
-        const unsigned char* data = nullptr;
-        long len = wkhtmltopdf_get_output(converter, &data);
-        if (len > 0 && data != nullptr) {
-            outputBuffer->assign(reinterpret_cast<const char*>(data), len);
+    // Read PDF into buffer if successful
+    if (success) {
+        std::ifstream ifs(tempPdf, std::ios::binary);
+        if (ifs) {
+            std::ostringstream oss;
+            oss << ifs.rdbuf();
+            outputBuffer = oss.str();
+        } else {
+            success = false;
         }
     }
     
+    // Cleanup temp files
+    std::remove(tempHtml.c_str());
+    std::remove(tempPdf.c_str());
+    
     if (!success) {
         std::cerr << "PDF conversion failed" << std::endl;
-    } else if (!outputPath.empty()) {
-        std::cout << "PDF generated: " << outputPath << std::endl;
     }
-    
-    // Cleanup
-    wkhtmltopdf_destroy_converter(converter);
     
     return success;
 }
