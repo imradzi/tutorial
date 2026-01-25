@@ -29,12 +29,41 @@ int main(int argc, char* argv[]) {
         };
         
         // Invoice line items
-        ctx.lists["items"] = std::vector<Item>{
-            {{{"description", "Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
-            {{{"description", "UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
-            {{{"description", "Server Setup & Configuration"}, {"qty", "5"}, {"unit_price", "100.00"}, {"amount", "500.00"}}}
-        };
-        
+        ctx.lists["items"] = std::vector<Item> {
+            {{{"description", " 1. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", " 2. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", " 3. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", " 4. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", " 5. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", " 6. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", " 7. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", " 8. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", " 9. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", "10. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", "11. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", "12. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", "13. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", "14. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", "15. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", "16. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", "17. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", "18. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", "19. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", "20. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", "21. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", "22. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", "23. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", "24. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", "25. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", "26. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", "27. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", "28. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", "29. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", "30. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", "31. Web Development Services"}, {"qty", "20"}, {"unit_price", "150.00"}, {"amount", "3,000.00"}}},
+            {{{"description", "32. UI/UX Design"}, {"qty", "10"}, {"unit_price", "100.00"}, {"amount", "1,000.00"}}},
+            {{{"description", "33. Server Setup & Configuration"}, {"qty", "5"}, {"unit_price", "100.00"}, {"amount", "500.00"}}}};
+
         std::string html = TemplateEngine::render(TemplateEngine::getInvoiceTemplate(), ctx);
         generator.generate(html, "invoice.pdf");
     }
@@ -57,14 +86,34 @@ int main(int argc, char* argv[]) {
         };
         
         // Report data rows
-        ctx.lists["rows"] = std::vector<Item>{
-            {{{"col1", "Region A - Retail"}, {"col2", "125,000"}, {"col3", "+20%"}}},
-            {{{"col1", "Region B - Wholesale"}, {"col2", "98,500"}, {"col3", "+3%"}}},
-            {{{"col1", "Region C - New Market"}, {"col2", "45,200"}, {"col3", "+25%"}}},
-            {{{"col1", "Region D - Online"}, {"col2", "78,300"}, {"col3", "+18%"}}},
-            {{{"col1", "TOTAL"}, {"col2", "347,000"}, {"col3", "+15%"}}}
-        };
-        
+        ctx.lists["rows"] = std::vector<Item> {
+            {{{"col1", " 1. Region A - Retail"}, {"col2", "125,000"}, {"col3", "+20%"}}},
+            {{{"col1", " 2. Region B - Wholesale"}, {"col2", "98,500"}, {"col3", "+3%"}}},
+            {{{"col1", " 3. Region C - New Market"}, {"col2", "45,200"}, {"col3", "+25%"}}},
+            {{{"col1", " 4. Region D - Online"}, {"col2", "78,300"}, {"col3", "+18%"}}},
+            {{{"col1", " 5. Region A - Retail"}, {"col2", "125,000"}, {"col3", "+20%"}}},
+            {{{"col1", " 6. Region B - Wholesale"}, {"col2", "98,500"}, {"col3", "+3%"}}},
+            {{{"col1", " 7. Region C - New Market"}, {"col2", "45,200"}, {"col3", "+25%"}}},
+            {{{"col1", " 8. Region D - Online"}, {"col2", "78,300"}, {"col3", "+18%"}}},
+            {{{"col1", " 9. Region A - Retail"}, {"col2", "125,000"}, {"col3", "+20%"}}},
+            {{{"col1", "10. Region B - Wholesale"}, {"col2", "98,500"}, {"col3", "+3%"}}},
+            {{{"col1", "11. Region C - New Market"}, {"col2", "45,200"}, {"col3", "+25%"}}},
+            {{{"col1", "12. Region D - Online"}, {"col2", "78,300"}, {"col3", "+18%"}}},
+            {{{"col1", "13. Region A - Retail"}, {"col2", "125,000"}, {"col3", "+20%"}}},
+            {{{"col1", "14. Region B - Wholesale"}, {"col2", "98,500"}, {"col3", "+3%"}}},
+            {{{"col1", "15. Region C - New Market"}, {"col2", "45,200"}, {"col3", "+25%"}}},
+            {{{"col1", "16. Region D - Online"}, {"col2", "78,300"}, {"col3", "+18%"}}},
+            {{{"col1", "17. Region A - Retail"}, {"col2", "125,000"}, {"col3", "+20%"}}},
+            {{{"col1", "18. Region B - Wholesale"}, {"col2", "98,500"}, {"col3", "+3%"}}},
+            {{{"col1", "19. Region C - New Market"}, {"col2", "45,200"}, {"col3", "+25%"}}},
+            {{{"col1", "20. Region D - Online"}, {"col2", "78,300"}, {"col3", "+18%"}}},
+            {{{"col1", "21. Region A - Retail"}, {"col2", "125,000"}, {"col3", "+20%"}}},
+            {{{"col1", "22. Region B - Wholesale"}, {"col2", "98,500"}, {"col3", "+3%"}}},
+            {{{"col1", "23. Region C - New Market"}, {"col2", "45,200"}, {"col3", "+25%"}}},
+            {{{"col1", "24. Region D - Online"}, {"col2", "78,300"}, {"col3", "+18%"}}},
+            {{{"col1", "25. Region D - Online"}, {"col2", "78,300"}, {"col3", "+18%"}}},
+            {{{"col1", "TOTAL"}, {"col2", "347,000"}, {"col3", "+15%"}}}};
+
         std::string html = TemplateEngine::render(TemplateEngine::getReportTemplate(), ctx);
         generator.generate(html, "report.pdf");
     }

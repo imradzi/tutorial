@@ -171,10 +171,12 @@ std::string TemplateEngine::getReportTemplate() {
     .letterhead { width: 100%; max-height: 80px; margin-bottom: 20px; }
     h1 { font-size: 20pt; color: #2c3e50; border-bottom: 2px solid #2c3e50; padding-bottom: 10px; margin-bottom: 20px; }
     h2 { font-size: 14pt; color: #34495e; margin-top: 25px; margin-bottom: 10px; }
-    .meta { color: #666; margin-bottom: 20px; }
+    .meta { color: #666; margin-bottom: 20px; text-align: right; display: flex; justify-content: flex-end; gap: 20px; }
+    .meta p { margin: 0; }
     table { width: 100%; border-collapse: collapse; margin: 15px 0; }
     th { background: #34495e; color: white; font-size: 11pt; text-align: left; padding: 8px; }
     td { padding: 8px; border-bottom: 1px solid #ddd; }
+    .text-right { text-align: right; }
     tr:nth-child(even) { background: #f8f9fa; }
     .summary-row { font-weight: bold; background: #ecf0f1; }
     .footer { margin-top: 30px; font-size: 10pt; color: #666; border-top: 1px solid #ddd; padding-top: 10px; }
@@ -200,16 +202,14 @@ std::string TemplateEngine::getReportTemplate() {
                 <th>{{col1_header}}</th>
                 <th>{{col2_header}}</th>
                 <th>{{col3_header}}</th>
-                <th>HEADER</th>
             </tr>
         </thead>
         <tbody>
             {{#each rows}}
             <tr>
                 <td>{{col1}}</td>
-                <td>{{col2}}</td>
-                <td>{{col3}}</td>
-                <td>TESTING</td>
+                <td class="text-right">{{col2}}</td>
+                <td class="text-right">{{col3}}</td>
             </tr>
             {{/each}}
         </tbody>
