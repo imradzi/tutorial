@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <mutex>
 
 struct PdfConfig {
     std::string pageSize = "A4";
@@ -11,6 +12,7 @@ struct PdfConfig {
     bool enableLocalFileAccess = true;  // needed for local images
 };
 
+// Thread-safe PDF generator (serializes all conversions via mutex)
 class PdfGenerator {
 public:
     PdfGenerator();
@@ -33,6 +35,7 @@ public:
 private:
     PdfConfig config_;
     static bool initialized_;
+    static std::mutex mutex_;  // Serializes all PDF generation (wkhtmltopdf is not thread-safe)
     
     bool doConvert(const std::string& htmlContent, const std::string& outputPath, 
                    std::string* outputBuffer = nullptr);

@@ -6,6 +6,7 @@
 #include <cstring>
 
 bool PdfGenerator::initialized_ = false;
+std::mutex PdfGenerator::mutex_;
 
 PdfGenerator::PdfGenerator() : config_() {
     if (!initialized_) {
@@ -64,6 +65,9 @@ bool PdfGenerator::generateToBuffer(const std::string& htmlContent, std::string&
 
 bool PdfGenerator::doConvert(const std::string& htmlContent, const std::string& outputPath,
                               std::string* outputBuffer) {
+    // Serialize all PDF generation - wkhtmltopdf library is not thread-safe
+    std::lock_guard<std::mutex> lock(mutex_);
+    
     if (!initialized_) {
         std::cerr << "Library not initialized" << std::endl;
         return false;
